@@ -188,12 +188,14 @@ else:
             fig.autofmt_xdate()
             st.pyplot(fig)
         else:
-            st.fig.autofmt_xdate()
+            fig.autofmt_xdate()
             st.pyplot(fig)
         else:
             st.info("Keine gültigen Zeitpunkte für die Visualisierung.")
-    except Exception as e:
-        st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
+        except Exception as e:
+            st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
+
+
 
 
 
