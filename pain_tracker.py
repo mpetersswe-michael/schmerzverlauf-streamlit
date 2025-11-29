@@ -9,7 +9,7 @@ import re
 st.set_page_config(page_title="Schmerzverlauf", layout="centered")
 
 # 🔐 Passwortschutz
-PASSWORT = "meinpasswort"  # ← hier dein Passwort eintragen
+PASSWORT = "QM1514"  # ← hier dein Passwort eintragen
 
 if "eingeloggt" not in st.session_state:
     st.session_state.eingeloggt = False
@@ -192,6 +192,7 @@ else:
             st.info("Keine gültigen Zeitpunkte für die Visualisierung.")
     except Exception as e:
         st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
+
 
 
 
