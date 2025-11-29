@@ -27,9 +27,9 @@ if not st.session_state.eingeloggt:
     st.title("🔒 Login erforderlich")
     pw = st.text_input("Passwort eingeben:", type="password")
     # Sofortiger Check – kein Durchrutschen
-    if pw and pw == PASSWORT:
-    st.session_state.eingeloggt = True
-    st.success("✅ Login erfolgreich – bitte oben im Menü auf „Neu   laden“ klicken.")
+      if pw and pw == PASSWORT:
+            st.session_state.eingeloggt = True
+            st.success("✅ Login erfolgreich – bitte oben im Menü auf „Neu laden“ klicken.")
 
         st.experimental_rerun()
     elif pw and pw != PASSWORT:
@@ -214,6 +214,8 @@ else:
             st.info("Keine gültigen Zeitpunkte für die Visualisierung.")
     except Exception as e:
         st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
+
+
 
 
 
