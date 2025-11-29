@@ -9,7 +9,7 @@ import re
 st.set_page_config(page_title="Schmerzverlauf", layout="centered")
 
 # 🔐 Passwortschutz
-PASSWORT = "QM1514"  # ← hier dein Passwort eintragen
+PASSWORT = "meinpasswort"  # ← hier dein Passwort eintragen
 
 if "eingeloggt" not in st.session_state:
     st.session_state.eingeloggt = False
@@ -162,7 +162,7 @@ else:
 
     st.dataframe(filtered_df, use_container_width=True)
 
-    st.download_button(
+      st.download_button(
         label="📥 CSV herunterladen",
         data=filtered_df.to_csv(index=False).encode("utf-8"),
         file_name="schmerzverlauf_auszug.csv",
@@ -188,18 +188,6 @@ else:
             fig.autofmt_xdate()
             st.pyplot(fig)
         else:
-            fig.autofmt_xdate()
-            st.pyplot(fig)
-        else:
             st.info("Keine gültigen Zeitpunkte für die Visualisierung.")
-        except Exception as e:
-            st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
-
-
-
-
-
-
-
-
-
+    except Exception as e:
+        st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
