@@ -169,7 +169,7 @@ else:
         mime="text/csv"
     )
 
-    try:
+        try:
         plot_df = filtered_df.copy()
         plot_df["Uhrzeit_dt"] = pd.to_datetime(plot_df["Uhrzeit"], errors="coerce")
         plot_df = plot_df.dropna(subset=["Uhrzeit_dt"]).sort_values("Uhrzeit_dt")
@@ -191,4 +191,3 @@ else:
             st.info("Keine gültigen Zeitpunkte für die Visualisierung.")
     except Exception as e:
         st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
-
