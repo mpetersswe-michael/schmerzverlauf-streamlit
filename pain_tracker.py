@@ -195,6 +195,7 @@ with tab2:
             file_name="schmerzverlauf_auszug.csv",
             mime="text/csv"
         )
+
         try:
             plot_df = filtered_df.copy()
             plot_df["Uhrzeit_dt"] = pd.to_datetime(plot_df["Uhrzeit"], errors="coerce")
@@ -218,6 +219,7 @@ with tab2:
         except Exception as e:
             st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
 
+# Tab 3: Verwaltung
 with tab3:
     st.subheader("🗑️ Verwaltung: Einträge löschen")
     df_admin = daten_laden(DATEIPFAD, SPALTEN)
