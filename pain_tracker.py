@@ -88,6 +88,87 @@ df_all = daten_laden(DATEIPFAD, SPALTEN)
 
 # 📝 Eingabeformular (nur Freitext, optional: Auswahl aus vorhandenen Werten)
 st.title("📈 Schmerzverlauf erfassen und visualisieren")
+# Bereiche klar trennen
+tab1, tab2, tab3 = st.tabs(["Eingabe", "Daten & Filter", "Verwaltung"])
+
+with tab1:
+    # --- Hier steht dein komplettes Formular (unverändert) ---
+    with st.form("eingabeformular"):
+        col1, col2 = st.columns(2)
+        # ... alle deine Eingabefelder ...
+        dry_run = st.checkbox("Dry-run aktivieren (keine Speicherung)")
+        speichern = st.form_submit_button("Speichern / Anzeigen")
+
+    # Verarbeitung des Formulars bleibt hier
+    if speichern:
+        # ... dein bestehender Speichern-Block ...
+        pass
+
+with tab2:
+    # --- Hier stehen Datenanzeige & Freitext-Filter ---
+    st.subheader("📋 Gespeicherte Einträge")
+    df = daten_laden(DATEIPFAD, SPALTEN)
+
+    if df.empty:
+        st.info("Noch keine Daten vorhanden.")
+    else:
+        st.subheader("🔍 Filteroptionen (Freitext)")
+        name_filter = st.text_input("Filter: Name enthält")
+        region_filter = st.text_input("Filter: Region enthält")
+        schmerz_filter = st.text_input("Filter: Schmerzempfinden enthält")
+        zeitpunkt_filter = st.text_input("Filter: Zeitpunkt enthält")
+        tageszeit_filter = st.text_input("Filter: Tageszeit enthält")
+        medikament_filter = st.text_input("Filter: Medikament enthält")
+
+        filtered_df = df.copy()
+        def contains(col, val):
+            return filtered_df[col].str.contains(val, case=False, na=False)
+
+        if name_filter.strip():
+            filtered_df = filtered_df[contains("Name", name_filter)]
+        if region_filter.strip():
+            filtered_df = filtered_df[contains("Region", region_filter)]
+        if schmerz_filter.strip():
+            filtered_df = filtered_df[contains("Schmerzempfinden", schmerz_filter)]
+        if zeitpunkt_filter.strip():
+            filtered_df = filtered_df[contains("Zeitpunkt", zeitpunkt_filter)]
+        if tageszeit_filter.strip():
+            filtered_df = filtered_df[contains("Tageszeit", tageszeit_filter)]
+        if medikament_filter.strip():
+            filtered_df = filtered_df[contains("Medikament", medikament_filter)]
+
+        st.dataframe(filtered_df, use_container_width=True)
+
+        st.download_button(
+            label="📥 CSV herunterladen",
+            data=filtered_df.to_csv(index=False).encode("utf-8"),
+            file_name="schmerzverlauf_auszug.csv",
+            mime="text/csv"
+        )
+
+        # Diagramm wie gehabt
+        try:
+            plot_df = filtered_df.copy()
+            plot_df["Uhrzeit_dt"] = pd.to_datetime(plot_df["Uhrzeit"], errors="coerce")
+            plot_df = plot_df.dropna(subset=["Uhrzeit_dt"]).sort_values("Uhrzeit_dt")
+            y = pd.to_numeric(plot_df["Intensität"], errors="coerce")
+
+            if not plot_df.empty and y.notna().any():
+                fig, ax = plt.subplots(figsize=(6, 3))
+                ax.plot(plot_df["Uhrzeit_dt"], y, marker="o")
+                ax.set_title("Schmerzintensität über Zeit")
+                ax.set_xlabel("Uhrzeit")
+                ax.set_ylabel("NRS (0–10)")
+                ax.grid(True, alpha=0.3)
+                ymin = max(0, (y.min() if y.notna().any() else 0) - 0.5)
+                ymax = min(10, (y.max() if y.notna().any() else 10) + 0.5)
+                ax.set_ylim(ymin, ymax)
+                fig.autofmt_xdate()
+                st.pyplot(fig)
+            else:
+                st.info("Keine gültigen Zeitpunkte/Intensitäten für die Visualisierung.")
+        except Exception as e:
+            st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
 
 with st.form("eingabeformular"):
     col1, col2 = st.columns(2)
@@ -234,6 +315,7 @@ else:
             st.info("Keine gültigen Zeitpunkte/Intensitäten für die Visualisierung.")
     except Exception as e:
         st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
+
 
 
 
