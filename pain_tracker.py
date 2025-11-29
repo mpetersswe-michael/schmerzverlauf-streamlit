@@ -9,7 +9,7 @@ import re
 st.set_page_config(page_title="Schmerzverlauf", layout="centered")
 
 # ---------------- Harter Login-Gate ----------------
-PASSWORT = "meinpasswort"  # <- anpassen
+PASSWORT = "QM1234"  # <- anpassen
 
 # Auf jedem ersten App-Lauf sauber initialisieren
 if "eingeloggt" not in st.session_state:
@@ -213,6 +213,7 @@ else:
             st.info("Keine gültigen Zeitpunkte für die Visualisierung.")
     except Exception as e:
         st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
+
 
 
 
