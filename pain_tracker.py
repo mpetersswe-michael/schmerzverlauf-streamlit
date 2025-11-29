@@ -8,8 +8,8 @@ import re
 # Seiteneinstellungen
 st.set_page_config(page_title="Schmerzverlauf", layout="centered")
 
-# 🔐 Passwortschutz
-PASSWORT = "QM1514"
+# 🔐 Passwortschutz über st.secrets
+PASSWORT = st.secrets["app_password"]
 
 if "eingeloggt" not in st.session_state:
     st.session_state.eingeloggt = False
@@ -256,6 +256,7 @@ with tab3:
                     st.experimental_rerun()
                 except Exception as e:
                     st.error(f"❌ Fehler beim Löschen: {e}")
+
 
 
 
