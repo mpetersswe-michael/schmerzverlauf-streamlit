@@ -6,9 +6,27 @@ import os
 
 # Seiteneinstellungen
 st.set_page_config(page_title="Schmerzverlauf", layout="centered")
+
+# ---------- Passwortschutz ----------
+PASSWORT = "QM1234"  # <- hier dein gewünschtes Passwort eintragen
+
+if "eingeloggt" not in st.session_state:
+    st.session_state.eingeloggt = False
+
+if not st.session_state.eingeloggt:
+    st.title("🔒 Login erforderlich")
+    eingabe = st.text_input("Passwort eingeben:", type="password")
+    if st.button("Login"):
+        if eingabe == PASSWORT:
+            st.session_state.eingeloggt = True
+            st.success("✅ Login erfolgreich – App wird geladen...")
+        else:
+            st.error("❌ Falsches Passwort")
+    st.stop()  # beendet hier, bis Login erfolgreich ist
+
+# ---------- Ab hier die eigentliche App ----------
 st.title("📈 Schmerzverlauf erfassen und visualisieren")
 
-# CSV-Datei und Spaltenüberschriften
 DATEIPFAD = "schmerzverlauf.csv"
 SPALTEN = [
     "Uhrzeit", "Name", "Region", "Schmerzempfinden",
@@ -16,7 +34,6 @@ SPALTEN = [
     "Zeitpunkt", "Tageszeit", "Notizen"
 ]
 
-# Hilfsfunktionen
 def csv_erzeugen_wenn_fehlt(pfad, spalten):
     if not os.path.exists(pfad) or os.path.getsize(pfad) == 0:
         pd.DataFrame(columns=spalten).to_csv(pfad, index=False)
@@ -151,5 +168,4 @@ else:
             st.pyplot(fig)
     except Exception as e:
         st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
-
 
