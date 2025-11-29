@@ -102,7 +102,7 @@ if speichern:
         st.subheader("📝 Zusammenfassung")
         st.write(pd.DataFrame([eintrag]))
 
-# Datenanzeige und Diagramm
+# Datenanzeige und Filter
 st.divider()
 st.subheader("📋 Gespeicherte Einträge")
 df = daten_laden(DATEIPFAD, SPALTEN)
@@ -110,22 +110,46 @@ df = daten_laden(DATEIPFAD, SPALTEN)
 if df.empty:
     st.info("Noch keine Daten vorhanden.")
 else:
-    st.dataframe(df, use_container_width=True)
+    st.subheader("🔍 Filteroptionen")
+    name_filter = st.text_input("Filter: Name enthält")
+    region_filter = st.selectbox("Filter: Region", ["Alle"] + df["Region"].dropna().unique().tolist())
+    zeitpunkt_filter = st.selectbox("Filter: Zeitpunkt", ["Alle"] + df["Zeitpunkt"].dropna().unique().tolist())
+    tageszeit_filter = st.selectbox("Filter: Tageszeit", ["Alle"] + df["Tageszeit"].dropna().unique().tolist())
 
+    filtered_df = df.copy()
+    if name_filter:
+        filtered_df = filtered_df[filtered_df["Name"].str.contains(name_filter, case=False, na=False)]
+    if region_filter != "Alle":
+        filtered_df = filtered_df[filtered_df["Region"] == region_filter]
+    if zeitpunkt_filter != "Alle":
+        filtered_df = filtered_df[filtered_df["Zeitpunkt"] == zeitpunkt_filter]
+    if tageszeit_filter != "Alle":
+        filtered_df = filtered_df[filtered_df["Tageszeit"] == tageszeit_filter]
+
+    st.dataframe(filtered_df, use_container_width=True)
+
+    # Download-Button
+    st.download_button(
+        label="📥 CSV herunterladen",
+        data=filtered_df.to_csv(index=False).encode("utf-8"),
+        file_name="schmerzverlauf_auszug.csv",
+        mime="text/csv"
+    )
+
+    # Diagramm
     try:
-        df["Uhrzeit_dt"] = pd.to_datetime(df["Uhrzeit"], errors="coerce")
-        df = df.dropna(subset=["Uhrzeit_dt"]).sort_values("Uhrzeit_dt")
+        filtered_df["Uhrzeit_dt"] = pd.to_datetime(filtered_df["Uhrzeit"], errors="coerce")
+        filtered_df = filtered_df.dropna(subset=["Uhrzeit_dt"]).sort_values("Uhrzeit_dt")
 
-        fig, ax = plt.subplots(figsize=(6, 3))
-        ax.plot(df["Uhrzeit_dt"], df["Intensität"], marker="o")
-        ax.set_title("Schmerzintensität über Zeit")
-        ax.set_xlabel("Uhrzeit")
-        ax.set_ylabel("NRS (0–10)")
-        ax.grid(True, alpha=0.3)
-        st.pyplot(fig)
+        if not filtered_df.empty:
+            fig, ax = plt.subplots(figsize=(6, 3))
+            ax.plot(filtered_df["Uhrzeit_dt"], filtered_df["Intensität"], marker="o")
+            ax.set_title("Schmerzintensität über Zeit")
+            ax.set_xlabel("Uhrzeit")
+            ax.set_ylabel("NRS (0–10)")
+            ax.grid(True, alpha=0.3)
+            st.pyplot(fig)
     except Exception as e:
         st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
-
-
 
 
