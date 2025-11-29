@@ -1,13 +1,11 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import csv
 from datetime import datetime
-import os
 
 st.set_page_config(page_title="Schmerzverlauf", layout="centered")
 
-st.title("🩺 Schmerzverlauf erfassen und visualisieren")
+st.title("📈 Schmerzverlauf erfassen und visualisieren")
 
 # Eingabefelder
 patient_name = st.text_input("Name (Patient)")
@@ -24,9 +22,17 @@ tageszeit = st.selectbox("Tageszeit", ["Morgen", "Mittag", "Abend", "Nacht"])
 # Dry-run Option
 dry_run = st.checkbox("Dry-run Modus aktivieren (keine Speicherung)")
 
-# CSV-Datei
-CSV_FILE = "pain_log.csv"
-expected_columns = ["Datum", "Uhrzeit", "Name", "Region", "Schmerzempfinden",
+# Anzeige der Eingaben
+if st.button("Eingaben anzeigen"):
+    st.subheader("Zusammenfassung")
+    st.write(f"👤 Patient: {patient_name}")
+    st.write(f"📍 Region: {region}")
+    st.write(f"💥 Schmerz: {pain_type} ({intensity}/10)")
+    st.write(f"💊 Medikament: {medication_name} {dosage} {medication_unit}")
+    st.write(f"⏱ Zeitpunkt: {before_after}, {tageszeit}")
+    st.write(f"📝 Notizen: {notes}")
+    st.write(f"Dry-run aktiv: {'Ja' if dry_run else 'Nein'}")
+hrzeit", "Name", "Region", "Schmerzempfinden",
                     "NRS", "Medikament", "Dosierung", "Einheit",
                     "Vor/Nach Einnahme", "Tageszeit", "Begleitsymptome"]
 
@@ -127,4 +133,5 @@ if not filtered_df.empty:
     st.pyplot(fig)
 else:
     st.warning("Keine Einträge für die gewählten Filter gefunden.")
+
 
