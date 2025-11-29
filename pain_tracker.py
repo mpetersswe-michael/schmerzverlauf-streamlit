@@ -190,4 +190,5 @@ else:
         else:
             st.info("Keine gültigen Zeitpunkte für die Visualisierung.")
     except Exception as e:
-        st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
+    st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
+
