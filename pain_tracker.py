@@ -27,9 +27,9 @@ if not st.session_state.eingeloggt:
     st.title("🔐 Login erforderlich")
     pw = st.text_input("Passwort eingeben:", type="password")
     if pw and pw == PASSWORT:
-        st.session_state.eingeloggt = True
-        st.success("✅ Login erfolgreich – App wird geladen…")
-        st.experimental_rerun()
+    st.session_state.eingeloggt = True
+    st.success("✅ Login erfolgreich – bitte oben auf „Neu laden“ klicken.")
+
     elif pw and pw != PASSWORT:
         st.error("❌ Falsches Passwort")
     st.stop()
@@ -234,6 +234,7 @@ else:
             st.info("Keine gültigen Zeitpunkte/Intensitäten für die Visualisierung.")
     except Exception as e:
         st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
+
 
 
 
