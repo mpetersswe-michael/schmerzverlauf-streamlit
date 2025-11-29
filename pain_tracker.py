@@ -183,18 +183,17 @@ else:
             ax.set_ylabel("NRS (0–10)")
             ax.grid(True, alpha=0.3)
             ax.set_ylim(max(0, y.min() - 0.5), min(10, y.max() + 0.5))
-            ax.set_xlim(plot_df["U            ax.set_ylim(max(0, y.min() - 0.5), min(10, y.max() + 0.5))
             ax.set_xlim(plot_df["Uhrzeit_dt"].min() - pd.Timedelta(minutes=1),
                         plot_df["Uhrzeit_dt"].max() + pd.Timedelta(minutes=1))
             fig.autofmt_xdate()
             st.pyplot(fig)
         else:
+            st.fig.autofmt_xdate()
+            st.pyplot(fig)
+        else:
             st.info("Keine gültigen Zeitpunkte für die Visualisierung.")
     except Exception as e:
         st.warning(f"⚠️ Diagramm konnte nicht erstellt werden: {e}")
-
-
-
 
 
 
