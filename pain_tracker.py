@@ -1,11 +1,9 @@
 import io
 import os
-import base64
 import datetime as dt
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from fpdf import FPDF
 
 # ----------------------------
 # Konfiguration & Konstanten
@@ -42,11 +40,9 @@ SESSION_KEY_USER = "username"
 def load_data() -> pd.DataFrame:
     if os.path.exists(DATA_FILE):
         df = pd.read_csv(DATA_FILE, encoding="utf-8")
-        # Spalten sicherstellen
         for col in DEFAULT_COLUMNS:
             if col not in df.columns:
                 df[col] = ""
-        # Datum normalisieren
         try:
             df["Datum"] = pd.to_datetime(df["Datum"]).dt.date
         except Exception:
@@ -115,64 +111,6 @@ def plot_pain_over_time(df_filtered: pd.DataFrame) -> io.BytesIO:
     return buf
 
 # ----------------------------
-# PDF-Export (fpdf, Cloud-freundlich)
-# ----------------------------
-def build_pdf_fpdf(df_filtered: pd.DataFrame,
-                   chart_png: io.BytesIO,
-                   name_filter: str) -> io.BytesIO:
-    # Diagramm temporär schreiben für fpdf.image()
-    chart_path = "chart_temp.png"
-    with open(chart_path, "wb") as f:
-        f.write(chart_png.getbuffer())
-
-    pdf = FPDF(format="A4")
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
-
-    # Titelbereich
-    pdf.set_font("Arial", style="B", size=14)
-    pdf.cell(0, 8, txt="Pain Tracking Bericht", ln=True)
-    pdf.set_font("Arial", size=11)
-    subtitle = f"Filter: Name enthält '{name_filter}'" if name_filter else "Filter: keiner"
-    pdf.cell(0, 7, txt=subtitle, ln=True)
-    pdf.cell(0, 7, txt=f"Generiert am {dt.datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=True)
-
-    # Diagramm
-    pdf.ln(4)
-    pdf.set_font("Arial", style="B", size=12)
-    pdf.cell(0, 7, txt="Diagramm", ln=True)
-    pdf.image(chart_path, x=10, w=190)  # Höhe automatisch
-
-    # Daten
-    pdf.ln(4)
-    pdf.set_font("Arial", style="B", size=12)
-    pdf.cell(0, 7, txt="Daten (gefiltert)", ln=True)
-    pdf.set_font("Arial", size=9)
-
-    if df_filtered.empty:
-        pdf.cell(0, 6, txt="Keine Daten vorhanden.", ln=True)
-    else:
-        header_line = " | ".join(DEFAULT_COLUMNS)
-        pdf.multi_cell(0, 5, txt=header_line)
-        for _, row in df_filtered.iterrows():
-            line = " | ".join(str(row.get(col, "")) for col in DEFAULT_COLUMNS)
-            pdf.multi_cell(0, 5, txt=line)
-
-    # Ausgabe als Bytes
-    pdf_output = io.BytesIO()
-    pdf_bytes = pdf.output(dest="S").encode("latin-1")  # fpdf liefert str; encode für Bytes
-    pdf_output.write(pdf_bytes)
-    pdf_output.seek(0)
-
-    # Cleanup temp
-    try:
-        os.remove(chart_path)
-    except Exception:
-        pass
-
-    return pdf_output
-
-# ----------------------------
 # Auth: Login/Logout (Session-State)
 # ----------------------------
 def login_form():
@@ -203,7 +141,7 @@ def logout_button():
 # UI
 # ----------------------------
 st.set_page_config(page_title="Pain Tracking", layout="wide")
-st.title("Pain Tracking – Login, Erfassung, Export")
+st.title("Pain Tracking – Login, Erfassung, Ansicht")
 
 # Auth-Gate
 if not st.session_state.get(SESSION_KEY_AUTH, False):
@@ -244,7 +182,7 @@ with st.form(key="input_form", clear_on_submit=False):
 
 st.divider()
 
-# Ansicht + Export
+# Ansicht
 st.subheader("Datenansicht und Diagramm")
 filter_name = st.text_input("Filter nach Name (Teilstring, optional)", value="")
 df_filtered = filter_by_name(df, filter_name)
@@ -270,35 +208,9 @@ with c_chart:
 
 st.divider()
 
-st.subheader("Export und Druck")
-
-col_csv, col_hint = st.columns([1, 1])
-
-with col_csv:
-    csv_bytes = df_filtered.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "CSV herunterladen",
-        data=csv_bytes,
-        file_name=f"pain_tracking_{dt.date.today()}.csv",
-        mime="text/csv"
-    )
-
-with col_hint:
-    st.markdown("**Druck-Hinweis**")
-    st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
-            "Die Tabelle und das Diagramm sind direkt sichtbar.")
-
-
-
-
-
-
-
-
-
-
-
-
+st.subheader("Druck-Hinweis")
+st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
+        "Die Tabelle und das Diagramm sind direkt sichtbar.")
 
 
 
