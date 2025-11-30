@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from datetime import datetime
 from dateutil import parser
 import os
 
@@ -17,44 +16,66 @@ except Exception:
 if "eingeloggt" not in st.session_state:
     st.session_state.eingeloggt = False
 
+# CSV-Dateien
 CSV_DATEI = "schmerzverlauf.csv"
 BACKUP_DATEI = "schmerzverlauf_backup.csv"
 
+# Feste Spaltenreihenfolge (Legacy, vollständig)
 SPALTEN = [
-    "Name", "Körperregion", "Schmerzempfinden", "NRS",
-    "Tageszeit", "Medikament", "Dosierung",
-    "Zeitpunkt", "Notizen"
+    "Name",
+    "Körperregion",
+    "Schmerzempfinden",
+    "NRS",
+    "Tageszeit",
+    "Medikament",
+    "Dosierung",
+    "Zeitpunkt",
+    "Notizen"
 ]
 
 def leeres_df():
     return pd.DataFrame(columns=SPALTEN)
 
 def normiere_dataframe(df_raw: pd.DataFrame) -> pd.DataFrame:
+    # Fehlende Spalten hinzufügen
     for s in SPALTEN:
         if s not in df_raw.columns:
             df_raw[s] = ""
+    # Nur erwartete Spalten und richtige Reihenfolge
     df = df_raw[SPALTEN].copy()
-    df["NRS"] = pd.to_numeric(df["NRS"], errors="coerce")
-    df["Zeitpunkt"] = df["Zeitpunkt"].astype(str)
+
+    # Typen/Strings normalisieren: Tabs raus, trimmen
     for s in SPALTEN:
         df[s] = df[s].astype(str).str.replace("\t", " ").str.strip()
+        # Leerstring statt "nan"
+        df[s] = df[s].replace({"nan": ""})
+
+    # NRS als Zahl
+    df["NRS"] = pd.to_numeric(df["NRS"], errors="coerce")
+
+    # Zeitpunkt bleibt String; Parsing erfolgt erst fürs Plot
+    df["Zeitpunkt"] = df["Zeitpunkt"].astype(str)
+
     return df
 
-# Laden oder neu erstellen
-if os.path.exists(CSV_DATEI):
-    try:
-        df = pd.read_csv(CSV_DATEI, sep=";", encoding="utf-8")
-        df = normiere_dataframe(df)
-        st.success(f"✅ {len(df)} Einträge geladen.")
-        df.to_csv(BACKUP_DATEI, index=False, sep=";", encoding="utf-8")
-        st.info("📂 Backup gespeichert als 'schmerzverlauf_backup.csv'")
-    except Exception as e:
-        st.error(f"❌ Fehler beim Laden: {e}")
-        df = leeres_df()
-else:
-    st.warning("⚠️ Keine CSV gefunden – neue wird erstellt.")
+def lade_csv(pfad: str) -> pd.DataFrame:
+    if os.path.exists(pfad):
+        df_loaded = pd.read_csv(pfad, sep=";", encoding="utf-8")
+        return normiere_dataframe(df_loaded)
+    else:
+        df_empty = leeres_df()
+        df_empty.to_csv(pfad, index=False, sep=";", encoding="utf-8")
+        return df_empty
+
+# Laden oder neu erstellen + Backup
+try:
+    df = lade_csv(CSV_DATEI)
+    st.success(f"✅ {len(df)} Einträge geladen.")
+    df.to_csv(BACKUP_DATEI, index=False, sep=";", encoding="utf-8")
+    st.info("📂 Backup gespeichert als 'schmerzverlauf_backup.csv'")
+except Exception as e:
+    st.error(f"❌ Fehler beim Laden: {e}")
     df = leeres_df()
-    df.to_csv(CSV_DATEI, index=False, sep=";", encoding="utf-8")
 
 # Sidebar Login
 with st.sidebar:
@@ -79,9 +100,10 @@ if not st.session_state.eingeloggt:
         st.error("❌ Falsches Passwort")
     st.stop()
 
-# Tab 1: Eingabe
+# Tabs
 tab1, tab2, tab3 = st.tabs(["Eingabe", "Daten & Diagramm", "Verwaltung"])
 
+# Tab 1: Eingabe
 with tab1:
     st.header("Schmerzverlauf erfassen")
 
@@ -93,7 +115,7 @@ with tab1:
         tageszeit = st.text_input("Tageszeit")
         medikament = st.text_input("Medikament")
         dosierung = st.text_input("Dosierung (z. B. 400)")
-        zeitpunkt = st.text_input("Zeitpunkt (z. B. 30.11.25 oder 2025-11-30)")
+        zeitpunkt = st.text_input("Zeitpunkt (z. B. 30.11.25, 30.11.2025 oder 2025-11-30)")
         notizen = st.text_area("Notizen (frei)")
 
         submitted = st.form_submit_button("➕ Eintrag speichern")
@@ -115,7 +137,7 @@ with tab1:
             st.success("✅ Eintrag gespeichert")
             st.rerun()
 
-# Tab 2: Diagramm
+# Tab 2: Daten & Diagramm
 with tab2:
     st.header("Daten filtern und visualisieren")
 
@@ -142,12 +164,14 @@ with tab2:
 
     st.dataframe(gefiltert)
 
+    # Flexible Datumserkennung
     def parse_datum(s):
         try:
             return parser.parse(s, dayfirst=True).date()
-        except:
+        except Exception:
             return None
 
+    # Diagramm: NRS über Datum (Linie verbindet alle Punkte)
     if not gefiltert.empty:
         plot_df = gefiltert.copy()
         plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
@@ -159,7 +183,7 @@ with tab2:
             plot_df["Datum_fmt"] = plot_df["Datum"].apply(lambda d: d.strftime("%d.%m.%y"))
 
             fig, ax = plt.subplots()
-            ax.plot(plot_df["Datum_fmt"], plot_df["NRS"], marker="o")
+            ax.plot(plot_df["Datum_fmt"], plot_df["NRS"], marker="o", linestyle="-")  # Linie sichtbar
             ax.set_xlabel("Datum")
             ax.set_ylabel("NRS (Schmerzstärke)")
             ax.set_ylim(0, 10)
@@ -178,8 +202,7 @@ with tab3:
 
     if st.button("CSV neu laden"):
         try:
-            df = pd.read_csv(CSV_DATEI, sep=";", encoding="utf-8")
-            df = normiere_dataframe(df)
+            df = lade_csv(CSV_DATEI)
             st.success("CSV neu geladen ✅")
             st.dataframe(df)
         except Exception as e:
@@ -191,13 +214,13 @@ with tab3:
         st.warning("⚠️ Alle Daten gelöscht")
         st.rerun()
 
+    # Download spiegelt exakt die aktuelle Datei (UTF-8, ;)
     st.download_button(
         label="📥 CSV herunterladen",
         data=open(CSV_DATEI, "rb").read(),
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
-
 
 
 
