@@ -185,7 +185,12 @@ with tab3:
 
         st.download_button(
             label="📘 Word-Dokumentation herunterladen",
-            data=
+            data=buffer,
+            file_name="Schmerzverlauf_Dokumentation.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+)
+
+
 
 
 
