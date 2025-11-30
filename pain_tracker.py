@@ -16,13 +16,11 @@ except Exception:
 if "eingeloggt" not in st.session_state:
     st.session_state.eingeloggt = False
 
-# CSV-Dateien
 CSV_DATEI = "schmerzverlauf.csv"
 BACKUP_DATEI = "schmerzverlauf_backup.csv"
 
-# Feste Spaltenreihenfolge
 SPALTEN = [
-    "Name", "Körperregion", "Schmerzempfinden", "NRS",
+    "Name", "Koerperregion", "Schmerzempfinden", "NRS",
     "Tageszeit", "Medikament", "Dosierung",
     "Zeitpunkt", "Notizen"
 ]
@@ -38,10 +36,9 @@ def normiere_dataframe(df_raw: pd.DataFrame) -> pd.DataFrame:
     df["NRS"] = pd.to_numeric(df["NRS"], errors="coerce")
     df["Zeitpunkt"] = df["Zeitpunkt"].astype(str)
     for s in SPALTEN:
-        df[s] = df[s].astype(str).str.strip()
+        df[s] = df[s].astype(str).str.replace("ö", "oe").str.replace("Ö", "Oe").str.replace("\t", " ").str.strip()
     return df
 
-# Laden oder neu erstellen
 if os.path.exists(CSV_DATEI):
     try:
         df = pd.read_csv(CSV_DATEI, sep=";")
@@ -57,7 +54,6 @@ else:
     df = leeres_df()
     df.to_csv(CSV_DATEI, index=False, sep=";")
 
-# Sidebar Login
 with st.sidebar:
     st.markdown("### Zugang")
     if st.session_state.eingeloggt:
@@ -80,29 +76,28 @@ if not st.session_state.eingeloggt:
         st.error("❌ Falsches Passwort")
     st.stop()
 
-# Tabs
 tab1, tab2, tab3 = st.tabs(["Eingabe", "Daten & Diagramm", "Verwaltung"])
 
-# Tab 1: Eingabe
+# Eingabe
 with tab1:
     st.header("Schmerzverlauf erfassen")
 
     with st.form("eingabe_formular", clear_on_submit=True):
         name = st.text_input("Name (Patient)")
-        koerperregion = st.text_input("Körperregion")
-        schmerzempfinden = st.text_input("Schmerzempfinden")
+        koerperregion = st.text_input("Körperregion").replace("ö", "oe").replace("Ö", "Oe").replace("\t", " ")
+        schmerzempfinden = st.text_input("Schmerzempfinden").replace("ö", "oe").replace("Ö", "Oe").replace("\t", " ")
         nrs = st.number_input("NRS (0–10)", min_value=0, max_value=10, step=1)
-        tageszeit = st.text_input("Tageszeit")
-        medikament = st.text_input("Medikament")
-        dosierung = st.text_input("Dosierung (z. B. 400)")
+        tageszeit = st.text_input("Tageszeit").replace("ö", "oe").replace("Ö", "Oe").replace("\t", " ")
+        medikament = st.text_input("Medikament").replace("ö", "oe").replace("Ö", "Oe").replace("\t", " ")
+        dosierung = st.text_input("Dosierung (z. B. 400)").replace("ö", "oe").replace("Ö", "Oe").replace("\t", " ")
         zeitpunkt_auto = datetime.now().strftime("%Y-%m-%d")
-        notizen = st.text_area("Notizen (frei)")
+        notizen = st.text_area("Notizen (frei)").replace("ö", "oe").replace("Ö", "Oe").replace("\t", " ")
 
         submitted = st.form_submit_button("➕ Eintrag speichern")
         if submitted:
             neuer_eintrag = pd.DataFrame([{
                 "Name": name,
-                "Körperregion": koerperregion,
+                "Koerperregion": koerperregion,
                 "Schmerzempfinden": schmerzempfinden,
                 "NRS": nrs,
                 "Tageszeit": tageszeit,
@@ -117,7 +112,7 @@ with tab1:
             st.success("✅ Eintrag gespeichert")
             st.rerun()
 
-# Tab 2: Daten & Diagramm
+# Diagramm
 with tab2:
     st.header("Daten filtern und visualisieren")
 
@@ -128,7 +123,7 @@ with tab2:
         return st.selectbox(label, ["Alle"] + sorted(werte))
 
     name_filter = dropdown("Name", "Name auswählen")
-    region_filter = dropdown("Körperregion", "Region auswählen")
+    region_filter = dropdown("Koerperregion", "Körperregion auswählen")
     tageszeit_filter = dropdown("Tageszeit", "Tageszeit auswählen")
     medikament_filter = dropdown("Medikament", "Medikament auswählen")
 
@@ -136,7 +131,7 @@ with tab2:
     if name_filter != "Alle":
         gefiltert = gefiltert[gefiltert["Name"] == name_filter]
     if region_filter != "Alle":
-        gefiltert = gefiltert[gefiltert["Körperregion"] == region_filter]
+        gefiltert = gefiltert[gefiltert["Koerperregion"] == region_filter]
     if tageszeit_filter != "Alle":
         gefiltert = gefiltert[gefiltert["Tageszeit"] == tageszeit_filter]
     if medikament_filter != "Alle":
@@ -144,7 +139,6 @@ with tab2:
 
     st.dataframe(gefiltert)
 
-    # Diagramm: NRS über formatiertes Datum, Y-Achse fix
     if not gefiltert.empty:
         plot_df = gefiltert.copy()
         plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
@@ -169,7 +163,7 @@ with tab2:
     else:
         st.info("Keine Daten für die gewählte Filterkombination.")
 
-# Tab 3: Verwaltung
+# Verwaltung
 with tab3:
     st.header("Verwaltung")
 
