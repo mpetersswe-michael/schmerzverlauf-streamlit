@@ -78,36 +78,39 @@ if not st.session_state.eingeloggt:
 
 tab1, tab2, tab3 = st.tabs(["Eingabe", "Daten & Diagramm", "Verwaltung"])
 
-# Eingabe
-with st.form("eingabe_formular", clear_on_submit=True):
-    name = st.text_input("Name (Patient)")
-    koerperregion = st.text_input("Körperregion").replace("ö", "oe").replace("Ö", "Oe").replace("\t", " ")
-    schmerzempfinden = st.text_input("Schmerzempfinden").replace("ö", "oe").replace("Ö", "Oe").replace("\t", " ")
-    nrs = st.number_input("NRS (0–10)", min_value=0, max_value=10, step=1)
-    tageszeit = st.text_input("Tageszeit").replace("ö", "oe").replace("Ö", "Oe").replace("\t", " ")
-    medikament = st.text_input("Medikament").replace("ö", "oe").replace("Ö", "Oe").replace("\t", " ")
-    dosierung = st.text_input("Dosierung (z. B. 400)").replace("ö", "oe").replace("Ö", "Oe").replace("\t", " ")
-    zeitpunkt = st.text_input("Zeitpunkt (Datum eingeben, z. B. 29.11.25)").replace("\t", " ")
-    notizen = st.text_area("Notizen (frei)").replace("ö", "oe").replace("Ö", "Oe").replace("\t", " ")
+with tab1:
+    st.header("Schmerzverlauf erfassen")
 
-    submitted = st.form_submit_button("➕ Eintrag speichern")
-    if submitted:
-        neuer_eintrag = pd.DataFrame([{
-            "Name": name,
-            "Koerperregion": koerperregion,
-            "Schmerzempfinden": schmerzempfinden,
-            "NRS": nrs,
-            "Tageszeit": tageszeit,
-            "Medikament": medikament,
-            "Dosierung": dosierung,
-            "Zeitpunkt": zeitpunkt,
-            "Notizen": notizen
-        }])
-        neuer_eintrag = normiere_dataframe(neuer_eintrag)
-        df = pd.concat([df, neuer_eintrag], ignore_index=True)
-        df.to_csv(CSV_DATEI, index=False, sep=";")
-        st.success("✅ Eintrag gespeichert")
-        st.rerun()
+    with st.form("eingabe_formular", clear_on_submit=True):
+        name = st.text_input("Name (Patient)")
+        koerperregion = st.text_input("Körperregion")
+        schmerzempfinden = st.text_input("Schmerzempfinden")
+        nrs = st.number_input("NRS (0–10)", min_value=0, max_value=10, step=1)
+        tageszeit = st.text_input("Tageszeit")
+        medikament = st.text_input("Medikament")
+        dosierung = st.text_input("Dosierung (z. B. 400)")
+        zeitpunkt = st.text_input("Zeitpunkt (Datum eingeben, z. B. 29.11.25)")
+        notizen = st.text_area("Notizen (frei)")
+
+        submitted = st.form_submit_button("➕ Eintrag speichern")
+        if submitted:
+            neuer_eintrag = pd.DataFrame([{
+                "Name": name,
+                "Koerperregion": koerperregion,
+                "Schmerzempfinden": schmerzempfinden,
+                "NRS": nrs,
+                "Tageszeit": tageszeit,
+                "Medikament": medikament,
+                "Dosierung": dosierung,
+                "Zeitpunkt": zeitpunkt,
+                "Notizen": notizen
+            }])
+            neuer_eintrag = normiere_dataframe(neuer_eintrag)
+            df = pd.concat([df, neuer_eintrag], ignore_index=True)
+            df.to_csv(CSV_DATEI, index=False, sep=";")
+            st.success("✅ Eintrag gespeichert")
+            st.rerun()
+
 
 # Diagramm
 with tab2:
@@ -136,6 +139,7 @@ with tab2:
 
     st.dataframe(gefiltert)
 
+    # 📊 Diagramm: NRS über Datum
     if not gefiltert.empty:
         plot_df = gefiltert.copy()
         plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
@@ -185,6 +189,7 @@ with tab3:
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
+
 
 
 
