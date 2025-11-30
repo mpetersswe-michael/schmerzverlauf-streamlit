@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
+from dateutil import parser
 import os
 
 st.set_page_config(page_title="Schmerzverlauf", layout="centered")
@@ -78,6 +79,7 @@ if not st.session_state.eingeloggt:
 
 tab1, tab2, tab3 = st.tabs(["Eingabe", "Daten & Diagramm", "Verwaltung"])
 
+# Tab 1: Eingabe
 with tab1:
     st.header("Schmerzverlauf erfassen")
 
@@ -89,7 +91,7 @@ with tab1:
         tageszeit = st.text_input("Tageszeit")
         medikament = st.text_input("Medikament")
         dosierung = st.text_input("Dosierung (z. B. 400)")
-        zeitpunkt = st.text_input("Zeitpunkt (Datum eingeben, z. B. 29.11.25)")
+        zeitpunkt = st.text_input("Zeitpunkt (z. B. 30.11.25 oder 2025-11-30)")
         notizen = st.text_area("Notizen (frei)")
 
         submitted = st.form_submit_button("➕ Eintrag speichern")
@@ -111,8 +113,7 @@ with tab1:
             st.success("✅ Eintrag gespeichert")
             st.rerun()
 
-
-# Diagramm
+# Tab 2: Diagramm
 with tab2:
     st.header("Daten filtern und visualisieren")
 
@@ -139,25 +140,22 @@ with tab2:
 
     st.dataframe(gefiltert)
 
-    # 📊 Diagramm: NRS über Datum
-    if not gefiltert.empty:
-        plot_df = gefiltert.copy()
-        plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
-        from dateutil import parser
-
-        def parse_datum(s):
+    # Diagramm mit flexibler Datumserkennung
+    def parse_datum(s):
         try:
             return parser.parse(s, dayfirst=True).date()
         except:
             return None
 
-    plot_df["Datum"] = plot_df["Zeitpunkt"].apply(parse_datum)
-
-    plot_df = plot_df.dropna(subset=["NRS", "Datum"])
+    if not gefiltert.empty:
+        plot_df = gefiltert.copy()
+        plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
+        plot_df["Datum"] = plot_df["Zeitpunkt"].apply(parse_datum)
+        plot_df = plot_df.dropna(subset=["NRS", "Datum"])
 
         if not plot_df.empty:
             plot_df = plot_df.sort_values(by="Datum")
-            plot_df["Datum_fmt"] = plot_df["Datum"].dt.strftime("%d.%m.%y")
+            plot_df["Datum_fmt"] = plot_df["Datum"].apply(lambda d: d.strftime("%d.%m.%y"))
 
             fig, ax = plt.subplots()
             ax.plot(plot_df["Datum_fmt"], plot_df["NRS"], marker="o")
@@ -173,7 +171,7 @@ with tab2:
     else:
         st.info("Keine Daten für die gewählte Filterkombination.")
 
-# Verwaltung
+# Tab 3: Verwaltung
 with tab3:
     st.header("Verwaltung")
 
@@ -198,6 +196,7 @@ with tab3:
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
+
 
 
 
