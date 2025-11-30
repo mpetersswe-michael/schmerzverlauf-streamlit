@@ -237,9 +237,23 @@ col_exp2, col_print = st.columns([1, 1])
 
 with col_exp2:
     pdf_buf = build_pdf(df_filtered, chart_png, filter_name)
+
+    # Download-Button
     st.download_button(
         "PDF herunterladen",
         data=pdf_buf,
+        file_name=f"pain_tracking_{dt.date.today()}.pdf",
+        mime="application/pdf"
+    )
+
+    # PDF direkt anzeigen (Workaround über iframe)
+    import base64
+    pdf_bytes = pdf_buf.getvalue()
+    b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+    pdf_display = f'<iframe src="data:application/pdf;base64,{b64_pdf}" width="100%" height="600" type="application/pdf"></iframe>'
+    st.markdown(pdf_display, unsafe_allow_html=True)
+
+
 
 
 
