@@ -1,4 +1,4 @@
-import streamlit as st
+  import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -134,13 +134,35 @@ with tab2:
 
     st.dataframe(gefiltert)
 
+    # 📊 Diagramm robust
     if "NRS" in gefiltert.columns and not gefiltert.empty:
-        fig, ax = plt.subplots()
-        ax.plot(gefiltert.index, gefiltert["NRS"], marker="o")
-        ax.set_xlabel("Eintrag")
-        ax.set_ylabel("NRS")
-        ax.set_title(f"Schmerzverlauf von {name_filter if name_filter != 'Alle' else 'Auswahl'}")
-        st.pyplot(fig)
+        plot_df = gefiltert.copy()
+
+        # Uhrzeit parsen und sortieren, falls vorhanden
+        if "Uhrzeit" in plot_df.columns:
+            plot_df["Uhrzeit_parsed"] = pd.to_datetime(plot_df["Uhrzeit"], errors="coerce")
+            plot_df = plot_df.sort_values(by="Uhrzeit_parsed").reset_index(drop=True)
+            x_values = plot_df["Uhrzeit_parsed"]
+            x_label = "Uhrzeit"
+        else:
+            plot_df = plot_df.reset_index(drop=True)
+            x_values = plot_df.index
+            x_label = "Eintrag"
+
+        # NRS numerisch erzwingen
+        plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
+        plot_df = plot_df.dropna(subset=["NRS"])
+
+        if not plot_df.empty:
+            fig, ax = plt.subplots()
+            ax.plot(x_values.loc[plot_df.index], plot_df["NRS"], marker="o")
+            ax.set_xlabel(x_label)
+            ax.set_ylabel("NRS")
+            titel_name = name_filter if name_filter != "Alle" else "Auswahl"
+            ax.set_title(f"Schmerzverlauf von {titel_name}")
+            st.pyplot(fig)
+        else:
+            st.info("Keine gültigen NRS-Werte vorhanden.")
     else:
         st.info("Kein NRS-Verlauf darstellbar.")
 
@@ -165,6 +187,8 @@ with tab3:
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
+
+
 
 
 
