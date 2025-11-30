@@ -1,27 +1,17 @@
-# Kritische Modulprüfung mit direktem Import
-try:
-    from docx import Document
-    from docx.shared import Inches
-    import matplotlib.pyplot as plt
-    import pandas as pd
-    from reportlab.lib.pagesizes import A4
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.utils import ImageReader
-except ImportError as e:
-    import streamlit as st
-    st.error(
-        "❌ Ein benötigtes Modul fehlt: "
-        f"{e.name}. Bitte requirements.txt prüfen und die Umgebung neu bauen."
-    )
-    st.stop()
-
 import io
 import os
 import datetime as dt
 import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+
 
 # ----------------------------
-# Config & constants
+# Konfiguration & Konstanten
 # ----------------------------
 DATA_FILE = "data.csv"
 
@@ -42,19 +32,16 @@ DEFAULT_COLUMNS = [
 
 
 # ----------------------------
-# Helpers
+# Hilfsfunktionen
 # ----------------------------
 def load_data() -> pd.DataFrame:
-    """Load CSV if exists, else create empty DataFrame with default columns."""
+    """CSV laden, falls vorhanden, sonst leere Tabelle mit Standardspalten erstellen."""
     if os.path.exists(DATA_FILE):
         df = pd.read_csv(DATA_FILE, encoding="utf-8")
-        # Ensure required columns exist
         for col in DEFAULT_COLUMNS:
             if col not in df.columns:
                 df[col] = ""
-        # Normalize types
         if "Datum" in df.columns:
-            # Try to parse dates, fallback to string
             try:
                 df["Datum"] = pd.to_datetime(df["Datum"]).dt.date
             except Exception:
@@ -65,7 +52,7 @@ def load_data() -> pd.DataFrame:
 
 
 def save_data(df: pd.DataFrame) -> None:
-    """Persist DataFrame to CSV, UTF-8."""
+    """DataFrame als CSV (UTF-8) speichern."""
     df.to_csv(DATA_FILE, index=False, encoding="utf-8")
 
 
@@ -75,7 +62,7 @@ def append_entry(df: pd.DataFrame,
                  intensity: int,
                  note: str,
                  situation: str) -> pd.DataFrame:
-    """Append-only write."""
+    """Append-only: neuen Eintrag hinzufügen."""
     new_row = {
         "Name": name.strip(),
         "Datum": date_val,
@@ -88,19 +75,16 @@ def append_entry(df: pd.DataFrame,
 
 
 def filter_by_name(df: pd.DataFrame, name_filter: str) -> pd.DataFrame:
-    """Case-insensitive filter by name; empty filter returns all."""
+    """Filter nach Name; leerer Filter liefert alle."""
     if not name_filter:
         return df.copy()
     return df[df["Name"].str.contains(name_filter, case=False, na=False)].copy()
 
 
 def plot_pain_over_time(df_filtered: pd.DataFrame) -> io.BytesIO:
-    """Create a line chart for pain intensity over time for the filtered view.
-    Returns PNG bytes buffer for embedding/printing/export.
-    """
+    """Liniendiagramm Schmerzintensität über Zeit für die gefilterte Ansicht."""
     buf = io.BytesIO()
     if df_filtered.empty:
-        # Produce a blank figure with message
         fig, ax = plt.subplots(figsize=(7, 3))
         ax.text(0.5, 0.5, "Keine Daten für Diagramm", ha="center", va="center")
         ax.axis("off")
@@ -110,7 +94,6 @@ def plot_pain_over_time(df_filtered: pd.DataFrame) -> io.BytesIO:
         plt.close(fig)
         return buf
 
-    # Ensure sorting by date for timeline plotting
     dfp = df_filtered.copy()
     try:
         dfp["Datum"] = pd.to_datetime(dfp["Datum"])
@@ -132,55 +115,14 @@ def plot_pain_over_time(df_filtered: pd.DataFrame) -> io.BytesIO:
     return buf
 
 
-def build_word_document(df_filtered: pd.DataFrame,
-                        chart_png: io.BytesIO,
-                        name_filter: str) -> io.BytesIO:
-    """Create a .docx with filtered table and chart."""
-    doc = Document()
-    title = f"Pain Tracking Bericht"
-    subtitle = f"Filter: Name enthält '{name_filter}'" if name_filter else "Filter: keiner"
-
-    doc.add_heading(title, level=1)
-    doc.add_paragraph(subtitle)
-    doc.add_paragraph(f"Generiert am {dt.datetime.now().strftime('%Y-%m-%d %H:%M')}")
-
-    doc.add_heading("Diagramm", level=2)
-    # Save chart to a temp buffer and add to doc
-    img_buf = io.BytesIO(chart_png.getvalue())
-    doc.add_picture(img_buf, width=Inches(6))
-
-    doc.add_heading("Daten (gefiltert)", level=2)
-    # Add table
-    if df_filtered.empty:
-        doc.add_paragraph("Keine Daten vorhanden.")
-    else:
-        table = doc.add_table(rows=1, cols=len(DEFAULT_COLUMNS))
-        # Header row
-        hdr_cells = table.rows[0].cells
-        for i, col in enumerate(DEFAULT_COLUMNS):
-            hdr_cells[i].text = col
-
-        for _, row in df_filtered.iterrows():
-            tr = table.add_row().cells
-            for i, col in enumerate(DEFAULT_COLUMNS):
-                tr[i].text = str(row.get(col, ""))
-
-    # Output buffer
-    out = io.BytesIO()
-    doc.save(out)
-    out.seek(0)
-    return out
-
-
 def build_pdf(df_filtered: pd.DataFrame,
               chart_png: io.BytesIO,
               name_filter: str) -> io.BytesIO:
-    """Create a simple PDF with chart and a compact table using ReportLab."""
+    """Erzeuge eine einfache PDF mit Diagramm und kompaktem Tabellenteil."""
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
 
-    # Title
     c.setFont("Helvetica-Bold", 14)
     c.drawString(40, height - 50, "Pain Tracking Bericht")
     c.setFont("Helvetica", 11)
@@ -188,7 +130,6 @@ def build_pdf(df_filtered: pd.DataFrame,
     c.drawString(40, height - 70, subtitle)
     c.drawString(40, height - 90, f"Generiert am {dt.datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
-    # Chart
     c.setFont("Helvetica-Bold", 12)
     c.drawString(40, height - 120, "Diagramm")
     img = ImageReader(chart_png)
@@ -196,17 +137,14 @@ def build_pdf(df_filtered: pd.DataFrame,
     chart_h = 200
     c.drawImage(img, 40, height - 120 - chart_h, width=chart_w, height=chart_h, preserveAspectRatio=True)
 
-    # Table header
     c.setFont("Helvetica-Bold", 12)
     c.drawString(40, height - 350, "Daten (gefiltert)")
 
-    # Table rows (compact listing; for many rows, add pagination)
     y = height - 370
     c.setFont("Helvetica", 9)
     if df_filtered.empty:
         c.drawString(40, y, "Keine Daten vorhanden.")
     else:
-        # Header
         headers = DEFAULT_COLUMNS
         c.setFont("Helvetica-Bold", 9)
         c.drawString(40, y, " | ".join(headers))
@@ -214,34 +152,16 @@ def build_pdf(df_filtered: pd.DataFrame,
         y -= 14
         for _, row in df_filtered.iterrows():
             line = " | ".join(str(row.get(col, "")) for col in headers)
-            # Wrap if necessary
-            for chunk in wrap_text(line, max_chars=110):
-                c.drawString(40, y, chunk)
-                y -= 12
-                if y < 60:
-                    c.showPage()
-                    y = height - 60
+            c.drawString(40, y, line)
+            y -= 12
+            if y < 60:
+                c.showPage()
+                y = height - 60
 
     c.showPage()
     c.save()
     buffer.seek(0)
     return buffer
-
-
-def wrap_text(text: str, max_chars: int = 90):
-    """Simple word-wrap for PDF lines."""
-    words = text.split()
-    lines = []
-    line = ""
-    for w in words:
-        if len(line) + len(w) + 1 <= max_chars:
-            line = (line + " " + w).strip()
-        else:
-            lines.append(line)
-            line = w
-    if line:
-        lines.append(line)
-    return lines
 
 
 # ----------------------------
@@ -250,12 +170,10 @@ def wrap_text(text: str, max_chars: int = 90):
 st.set_page_config(page_title="Pain Tracking", layout="wide")
 
 st.title("Pain Tracking – Hybrid-Frontend")
-st.caption("Append-only, filterbar, druckbar, mit Word-Export und vier Schmerzsituationen.")
+st.caption("Append-only, filterbar, druckbar, mit PDF-Export und vier Schmerzsituationen.")
 
-# Load or init data
 df = load_data()
 
-# --- Input form
 with st.form(key="input_form", clear_on_submit=False):
     st.subheader("Neuer Eintrag")
     col1, col2, col3 = st.columns([2, 1, 1])
@@ -276,7 +194,6 @@ with st.form(key="input_form", clear_on_submit=False):
 
     submit = st.form_submit_button("Speichern (append-only)")
     if submit:
-        # Self-checks
         errors = []
         if not name.strip():
             errors.append("Name ist erforderlich.")
@@ -291,20 +208,16 @@ with st.form(key="input_form", clear_on_submit=False):
 
 st.divider()
 
-# --- Filters & view
 st.subheader("Datenansicht und Diagramm")
 filter_name = st.text_input("Filter nach Name (Teilstring, optional)", value="")
 df_filtered = filter_by_name(df, filter_name)
 
-# Two columns: table and chart
 c_table, c_chart = st.columns([3, 2])
 
 with c_table:
     st.markdown("**Gefilterte Tabelle**")
-    # Scrollable dataframe; wide mode ensures horizontal/vertical scrolling
     st.dataframe(df_filtered, use_container_width=True, height=380)
 
-    # CSV download
     csv_bytes = df_filtered.to_csv(index=False).encode("utf-8")
     st.download_button(
         "CSV herunterladen",
@@ -316,43 +229,20 @@ with c_table:
 with c_chart:
     st.markdown("**Diagramm (Schmerzverlauf)**")
     chart_png = plot_pain_over_time(df_filtered)
-    st.image(chart_png, caption="Linienchart der Schmerzintensität", use_column_width=True)
+    st.image(chart_png, caption="Liniendiagramm der Schmerzintensität", use_column_width=True)
 
 st.divider()
 
-# --- Exports & printing
 st.subheader("Export und Drucken")
 
-col_exp1, col_exp2, col_print = st.columns([1, 1, 1])
-
-with col_exp1:
-    # Word export
-    word_buf = build_word_document(df_filtered, chart_png, filter_name)
-    st.download_button(
-        "Word (.docx) herunterladen",
-        data=word_buf,
-        file_name=f"pain_report_{dt.date.today()}.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
+col_exp2, col_print = st.columns([1, 1])
 
 with col_exp2:
-    # PDF export (diagram + compact table)
     pdf_buf = build_pdf(df_filtered, chart_png, filter_name)
     st.download_button(
         "PDF herunterladen",
         data=pdf_buf,
-        file_name=f"pain_report_{dt.date.today()}.pdf",
-        mime="application/pdf"
-    )
 
-with col_print:
-    # Browser print tips
-    st.markdown("**Drucken (Browser):**")
-    st.write("- Windows: Strg+P")
-    st.write("- macOS: Cmd+P")
-    st.write("Wähle 'Hintergrundgrafiken drucken', damit das Diagramm sichtbar bleibt.")
-
-st.caption("Hinweis: Word/PDF fassen Diagramm und gefilterte Daten zusammen. CSV bleibt der Rohdaten-Export.")
 
 
 
