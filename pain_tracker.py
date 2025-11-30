@@ -153,6 +153,7 @@ with tab2:
     st.dataframe(gefiltert)
 
    # 📊 Diagramm: NRS über formatiertes Datum
+# 📊 Diagramm: NRS über formatiertes Datum, Y-Achse fix
 if not gefiltert.empty:
     plot_df = gefiltert.copy()
     plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
@@ -167,6 +168,7 @@ if not gefiltert.empty:
         ax.plot(plot_df["Datum_fmt"], plot_df["NRS"], marker="o")
         ax.set_xlabel("Datum")
         ax.set_ylabel("NRS (Schmerzstärke)")
+        ax.set_ylim(0, 10)  # Y-Achse fix von 0 bis 10
         titel_name = name_filter if name_filter != "Alle" else "Auswahl"
         ax.set_title(f"Schmerzverlauf von {titel_name}")
         plt.xticks(rotation=45)
@@ -201,6 +203,7 @@ with tab3:
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
+
 
 
 
