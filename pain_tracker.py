@@ -270,34 +270,23 @@ with c_chart:
 
 st.divider()
 
-st.subheader("PDF-Export und Ansicht")
-col_exp, col_hint = st.columns([1, 1])
+st.subheader("Export und Druck")
 
-with col_exp:
-    pdf_buf = build_pdf_fpdf(df_filtered, chart_png, filter_name)
+col_csv, col_hint = st.columns([1, 1])
 
+with col_csv:
+    csv_bytes = df_filtered.to_csv(index=False).encode("utf-8")
     st.download_button(
-        "PDF herunterladen",
-        data=pdf_buf,
-        file_name=f"pain_tracking_{dt.date.today()}.pdf",
-        mime="application/pdf"
+        "CSV herunterladen",
+        data=csv_bytes,
+        file_name=f"pain_tracking_{dt.date.today()}.csv",
+        mime="text/csv"
     )
-
-    # Direkte Ansicht via iframe
-    pdf_bytes = pdf_buf.getvalue()
-    b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
-    pdf_display = f'<iframe src="data:application/pdf;base64,{b64_pdf}" width="100%" height="520" type="application/pdf"></iframe>'
-    st.markdown(pdf_display, unsafe_allow_html=True)
 
 with col_hint:
     st.markdown("**Druck-Hinweis**")
-    st.info("Zum Drucken die PDF in der Ansicht öffnen und im Browser drucken (Strg+P bzw. ⌘+P). "
-            "Die Datei kann manuell am gewünschten Ort gespeichert werden.")
-
-
-
-
-
+    st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
+            "Die Tabelle und das Diagramm sind direkt sichtbar.")
 
 
 
