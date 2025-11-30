@@ -118,11 +118,18 @@ with tab2:
     # Diagramm
     if not df.empty:
         st.subheader("NRS-Verlauf")
+
+    if not df.empty:
+        # Den letzten Namen aus der Tabelle nehmen
+        letzter_name = df["Name"].iloc[-1] if "Name" in df.columns else "Unbekannt"
+
         fig, ax = plt.subplots()
         ax.plot(df.index, df["NRS"], marker="o")
         ax.set_xlabel("Eintrag")
         ax.set_ylabel("NRS")
+        ax.set_title(f"NRS-Verlauf von {letzter_name}")  # Titel mit Name
         st.pyplot(fig)
+
 
 # 🗑️ Tab 3: Verwaltung
 with tab3:
@@ -137,6 +144,7 @@ with tab3:
         df.to_csv(CSV_DATEI, index=False)
         st.warning("⚠️ Alle Daten gelöscht")
         st.rerun()
+
 
 
 
