@@ -36,12 +36,14 @@ if os.path.exists(CSV_DATEI):
     except Exception as e:
         st.error(f"❌ Fehler beim Laden der CSV: {e}")
         df = pd.DataFrame(columns=[
-            "Uhrzeit", "Name", "Region", "Schmerzempfinden", "Intensität", "Medikament"
+            "Uhrzeit","Name","Medikament","Körperregion","Dosierung",
+            "Schmerzempfinden","Einheit","NRS","Zeitpunkt","Tageszeit","Notizen"
         ])
 else:
     st.warning("⚠️ Keine CSV-Datei gefunden – neue wird erstellt.")
     df = pd.DataFrame(columns=[
-        "Uhrzeit", "Name", "Region", "Schmerzempfinden", "Intensität", "Medikament"
+        "Uhrzeit","Name","Medikament","Körperregion","Dosierung",
+        "Schmerzempfinden","Einheit","NRS","Zeitpunkt","Tageszeit","Notizen"
     ])
     df.to_csv(CSV_DATEI, index=False)
 
@@ -74,7 +76,7 @@ if not st.session_state.eingeloggt:
 # -------------------------
 tab1, tab2, tab3 = st.tabs(["Eingabe", "Daten & Filter", "Verwaltung"])
 
-# 📝 Tab 1: Eingabe
+# 📝 Tab 1: Eingabe (alle Felder)
 with tab1:
     st.header("Schmerzverlauf erfassen")
 
@@ -82,8 +84,13 @@ with tab1:
         name = st.text_input("Name (Patient)")
         medikament = st.text_input("Medikament")
         region = st.text_input("Körperregion")
+        dosierung = st.text_input("Dosierung (z. B. 400 oder 400mg)")
         empfinden = st.text_input("Schmerzempfinden")
-        intensitaet = st.slider("Intensität (0–10)", min_value=0, max_value=10, step=1)
+        einheit = st.text_input("Einheit (z. B. mg, Tablette…)")
+        nrs = st.number_input("NRS (0–10)", min_value=0, max_value=10, step=1)
+        zeitpunkt = st.text_input("Zeitpunkt (frei oder automatisch)")
+        tageszeit = st.text_input("Tageszeit")
+        notizen = st.text_area("Begleitsymptome / Notizen")
         uhrzeit = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         submitted = st.form_submit_button("➕ Eintrag speichern")
@@ -91,39 +98,47 @@ with tab1:
             neuer_eintrag = pd.DataFrame([{
                 "Uhrzeit": uhrzeit,
                 "Name": name,
-                "Region": region,
+                "Medikament": medikament,
+                "Körperregion": region,
+                "Dosierung": dosierung,
                 "Schmerzempfinden": empfinden,
-                "Intensität": intensitaet,
-                "Medikament": medikament
+                "Einheit": einheit,
+                "NRS": nrs,
+                "Zeitpunkt": zeitpunkt,
+                "Tageszeit": tageszeit,
+                "Notizen": notizen
             }])
             df = pd.concat([df, neuer_eintrag], ignore_index=True)
             df.to_csv(CSV_DATEI, index=False)
             st.success("✅ Eintrag gespeichert")
             st.rerun()
 
-# 🎛️ Tab 2: Daten & Filter
+# 🎛️ Tab 2: Daten & Filter (Dropdowns)
 with tab2:
     st.header("Daten filtern und visualisieren")
 
     name_filter = st.selectbox("Name auswählen", options=["Alle"] + sorted(df["Name"].dropna().unique().tolist()))
-    region_filter = st.selectbox("Region auswählen", options=["Alle"] + sorted(df["Region"].dropna().unique().tolist()))
+    region_filter = st.selectbox("Region auswählen", options=["Alle"] + sorted(df["Körperregion"].dropna().unique().tolist()))
     medikament_filter = st.selectbox("Medikament auswählen", options=["Alle"] + sorted(df["Medikament"].dropna().unique().tolist()))
+    tageszeit_filter = st.selectbox("Tageszeit auswählen", options=["Alle"] + sorted(df["Tageszeit"].dropna().unique().tolist()))
 
     gefiltert = df.copy()
     if name_filter != "Alle":
         gefiltert = gefiltert[gefiltert["Name"] == name_filter]
     if region_filter != "Alle":
-        gefiltert = gefiltert[gefiltert["Region"] == region_filter]
+        gefiltert = gefiltert[gefiltert["Körperregion"] == region_filter]
     if medikament_filter != "Alle":
         gefiltert = gefiltert[gefiltert["Medikament"] == medikament_filter]
+    if tageszeit_filter != "Alle":
+        gefiltert = gefiltert[gefiltert["Tageszeit"] == tageszeit_filter]
 
     st.dataframe(gefiltert)
 
     if not gefiltert.empty:
         fig, ax = plt.subplots()
-        ax.plot(gefiltert.index, gefiltert["Intensität"], marker="o")
+        ax.plot(gefiltert.index, gefiltert["NRS"], marker="o")
         ax.set_xlabel("Eintrag")
-        ax.set_ylabel("Intensität")
+        ax.set_ylabel("NRS")
         titel_name = name_filter if name_filter != "Alle" else "Auswahl"
         ax.set_title(f"Schmerzverlauf von {titel_name}")
         st.pyplot(fig)
@@ -157,10 +172,10 @@ with tab3:
         doc.add_heading("Onboarding & Workflow – Schmerzverlauf App", level=1)
 
         doc.add_paragraph("✅ Login: Passwort eingeben, Toast bestätigt erfolgreichen Zugang.")
-        doc.add_paragraph("✅ Eingabe: Patientendaten, Medikament, Region, Schmerzempfinden, Intensität.")
+        doc.add_paragraph("✅ Eingabe: Alle Felder wie im VBA-Formular (Name, Medikament, Region, Dosierung, Schmerzempfinden, Einheit, NRS, Zeitpunkt, Tageszeit, Notizen).")
         doc.add_paragraph("✅ Speicherung: Einträge werden automatisch mit Zeitstempel gesichert.")
-        doc.add_paragraph("✅ Filter: Dropdowns für Name, Region, Medikament.")
-        doc.add_paragraph("✅ Diagramm: Verlauf der Intensität pro Patient.")
+        doc.add_paragraph("✅ Filter: Dropdowns für Name, Region, Medikament, Tageszeit.")
+        doc.add_paragraph("✅ Diagramm: Verlauf der NRS pro Patient.")
         doc.add_paragraph("✅ Verwaltung: CSV neu laden, Daten löschen, Backup automatisch.")
         doc.add_paragraph("✅ Export: CSV-Download jederzeit möglich.")
 
@@ -170,10 +185,8 @@ with tab3:
 
         st.download_button(
             label="📘 Word-Dokumentation herunterladen",
-            data=buffer,
-            file_name="Schmerzverlauf_Dokumentation.docx",
-            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        )
+            data=
+
 
 
 
