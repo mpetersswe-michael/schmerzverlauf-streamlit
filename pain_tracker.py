@@ -152,27 +152,29 @@ with tab2:
 
     st.dataframe(gefiltert)
 
-    # Diagramm: NRS über Datum (Zeitpunkt)
-    if not gefiltert.empty:
-        plot_df = gefiltert.copy()
-        plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
-        plot_df["Datum"] = pd.to_datetime(plot_df["Zeitpunkt"], errors="coerce").dt.date
-        plot_df = plot_df.dropna(subset=["NRS", "Datum"])
+   # 📊 Diagramm: NRS über formatiertes Datum
+if not gefiltert.empty:
+    plot_df = gefiltert.copy()
+    plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
+    plot_df["Datum"] = pd.to_datetime(plot_df["Zeitpunkt"], errors="coerce")
+    plot_df = plot_df.dropna(subset=["NRS", "Datum"])
 
-        if not plot_df.empty:
-            plot_df = plot_df.sort_values(by="Datum")
-            fig, ax = plt.subplots()
-            ax.plot(plot_df["Datum"], plot_df["NRS"], marker="o")
-            ax.set_xlabel("Datum")
-            ax.set_ylabel("NRS (Schmerzstärke)")
-            titel_name = name_filter if name_filter != "Alle" else "Auswahl"
-            ax.set_title(f"Schmerzverlauf von {titel_name}")
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
-        else:
-            st.info("Keine gültigen NRS-Daten mit Datum vorhanden.")
+    if not plot_df.empty:
+        plot_df = plot_df.sort_values(by="Datum")
+        plot_df["Datum_fmt"] = plot_df["Datum"].dt.strftime("%d.%m.%y")
+
+        fig, ax = plt.subplots()
+        ax.plot(plot_df["Datum_fmt"], plot_df["NRS"], marker="o")
+        ax.set_xlabel("Datum")
+        ax.set_ylabel("NRS (Schmerzstärke)")
+        titel_name = name_filter if name_filter != "Alle" else "Auswahl"
+        ax.set_title(f"Schmerzverlauf von {titel_name}")
+        plt.xticks(rotation=45)
+        st.pyplot(fig)
     else:
-        st.info("Keine Daten für die gewählte Filterkombination.")
+        st.info("Keine gültigen NRS-Daten mit Datum vorhanden.")
+else:
+    st.info("Keine Daten für die gewählte Filterkombination.")
 
 # Tab 3: Verwaltung
 with tab3:
@@ -199,6 +201,7 @@ with tab3:
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
+
 
 
 
