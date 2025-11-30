@@ -1,9 +1,20 @@
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import datetime
+import os
+import re
+
+# Seiteneinstellungen
+st.set_page_config(page_title="Schmerzverlauf", layout="centered")
+
 # 🔐 Passwortschutz über st.secrets
 try:
     PASSWORT = st.secrets["app_password"]
 except KeyError:
     st.error("⚠️ Kein Passwort in st.secrets gesetzt. Bitte im Secrets-Manager hinterlegen.")
     st.stop()
+
 
 if "eingeloggt" not in st.session_state:
     st.session_state.eingeloggt = False
@@ -253,6 +264,7 @@ with tab3:
                     st.experimental_rerun()
                 except Exception as e:
                     st.error(f"❌ Fehler beim Löschen: {e}")
+
 
 
 
