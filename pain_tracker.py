@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import os
 
-# Seiteneinstellungen
 st.set_page_config(page_title="Schmerzverlauf", layout="centered")
 
 # Passwortschutz
@@ -17,11 +16,11 @@ except Exception:
 if "eingeloggt" not in st.session_state:
     st.session_state.eingeloggt = False
 
-# Dateien
+# CSV-Dateien
 CSV_DATEI = "schmerzverlauf.csv"
 BACKUP_DATEI = "schmerzverlauf_backup.csv"
 
-# Feste Spaltenreihenfolge (ohne 'Einheit', mit optional 'Notizen' am Ende)
+# Feste Spaltenreihenfolge
 SPALTEN = [
     "Name", "Körperregion", "Schmerzempfinden", "NRS",
     "Tageszeit", "Medikament", "Dosierung",
@@ -32,28 +31,23 @@ def leeres_df():
     return pd.DataFrame(columns=SPALTEN)
 
 def normiere_dataframe(df_raw: pd.DataFrame) -> pd.DataFrame:
-    # Fehlende Spalten ergänzen
     for s in SPALTEN:
         if s not in df_raw.columns:
             df_raw[s] = ""
-    # Nur erwartete Spalten und richtige Reihenfolge
     df = df_raw[SPALTEN].copy()
-    # Typen säubern
     df["NRS"] = pd.to_numeric(df["NRS"], errors="coerce")
-    # Zeitpunkt als String belassen (Datum wird beim Plot geparst)
     df["Zeitpunkt"] = df["Zeitpunkt"].astype(str)
-    # Whitespace trimmen in Textfeldern
-    for s in ["Name","Körperregion","Schmerzempfinden","Tageszeit","Medikament","Dosierung","Zeitpunkt","Notizen"]:
+    for s in SPALTEN:
         df[s] = df[s].astype(str).str.strip()
     return df
 
 # Laden oder neu erstellen
 if os.path.exists(CSV_DATEI):
     try:
-        df = pd.read_csv(CSV_DATEI)
+        df = pd.read_csv(CSV_DATEI, sep=";")
         df = normiere_dataframe(df)
         st.success(f"✅ {len(df)} Einträge geladen.")
-        df.to_csv(BACKUP_DATEI, index=False)
+        df.to_csv(BACKUP_DATEI, index=False, sep=";")
         st.info("📂 Backup gespeichert als 'schmerzverlauf_backup.csv'")
     except Exception as e:
         st.error(f"❌ Fehler beim Laden: {e}")
@@ -61,9 +55,9 @@ if os.path.exists(CSV_DATEI):
 else:
     st.warning("⚠️ Keine CSV gefunden – neue wird erstellt.")
     df = leeres_df()
-    df.to_csv(CSV_DATEI, index=False)
+    df.to_csv(CSV_DATEI, index=False, sep=";")
 
-# Sidebar Login/Logout
+# Sidebar Login
 with st.sidebar:
     st.markdown("### Zugang")
     if st.session_state.eingeloggt:
@@ -75,7 +69,6 @@ with st.sidebar:
     else:
         st.warning("🔒 Nicht eingeloggt")
 
-# Login
 if not st.session_state.eingeloggt:
     st.title("🔐 Login erforderlich")
     pw = st.text_input("Passwort eingeben:", type="password")
@@ -90,7 +83,7 @@ if not st.session_state.eingeloggt:
 # Tabs
 tab1, tab2, tab3 = st.tabs(["Eingabe", "Daten & Diagramm", "Verwaltung"])
 
-# Tab 1: Eingabe (exakte Reihenfolge)
+# Tab 1: Eingabe
 with tab1:
     st.header("Schmerzverlauf erfassen")
 
@@ -102,26 +95,25 @@ with tab1:
         tageszeit = st.text_input("Tageszeit")
         medikament = st.text_input("Medikament")
         dosierung = st.text_input("Dosierung (z. B. 400)")
-        # Zeitpunkt automatisch: Datum (YYYY-MM-DD)
         zeitpunkt_auto = datetime.now().strftime("%Y-%m-%d")
         notizen = st.text_area("Notizen (frei)")
 
         submitted = st.form_submit_button("➕ Eintrag speichern")
         if submitted:
             neuer_eintrag = pd.DataFrame([{
-                "Name": name.strip(),
-                "Körperregion": koerperregion.strip(),
-                "Schmerzempfinden": schmerzempfinden.strip(),
+                "Name": name,
+                "Körperregion": koerperregion,
+                "Schmerzempfinden": schmerzempfinden,
                 "NRS": nrs,
-                "Tageszeit": tageszeit.strip(),
-                "Medikament": medikament.strip(),
-                "Dosierung": dosierung.strip(),
+                "Tageszeit": tageszeit,
+                "Medikament": medikament,
+                "Dosierung": dosierung,
                 "Zeitpunkt": zeitpunkt_auto,
-                "Notizen": notizen.strip()
+                "Notizen": notizen
             }])
             neuer_eintrag = normiere_dataframe(neuer_eintrag)
             df = pd.concat([df, neuer_eintrag], ignore_index=True)
-            df.to_csv(CSV_DATEI, index=False)
+            df.to_csv(CSV_DATEI, index=False, sep=";")
             st.success("✅ Eintrag gespeichert")
             st.rerun()
 
@@ -152,31 +144,30 @@ with tab2:
 
     st.dataframe(gefiltert)
 
-   # 📊 Diagramm: NRS über formatiertes Datum
-# 📊 Diagramm: NRS über formatiertes Datum, Y-Achse fix
-if not gefiltert.empty:
-    plot_df = gefiltert.copy()
-    plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
-    plot_df["Datum"] = pd.to_datetime(plot_df["Zeitpunkt"], errors="coerce")
-    plot_df = plot_df.dropna(subset=["NRS", "Datum"])
+    # Diagramm: NRS über formatiertes Datum, Y-Achse fix
+    if not gefiltert.empty:
+        plot_df = gefiltert.copy()
+        plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
+        plot_df["Datum"] = pd.to_datetime(plot_df["Zeitpunkt"], errors="coerce")
+        plot_df = plot_df.dropna(subset=["NRS", "Datum"])
 
-    if not plot_df.empty:
-        plot_df = plot_df.sort_values(by="Datum")
-        plot_df["Datum_fmt"] = plot_df["Datum"].dt.strftime("%d.%m.%y")
+        if not plot_df.empty:
+            plot_df = plot_df.sort_values(by="Datum")
+            plot_df["Datum_fmt"] = plot_df["Datum"].dt.strftime("%d.%m.%y")
 
-        fig, ax = plt.subplots()
-        ax.plot(plot_df["Datum_fmt"], plot_df["NRS"], marker="o")
-        ax.set_xlabel("Datum")
-        ax.set_ylabel("NRS (Schmerzstärke)")
-        ax.set_ylim(0, 10)  # Y-Achse fix von 0 bis 10
-        titel_name = name_filter if name_filter != "Alle" else "Auswahl"
-        ax.set_title(f"Schmerzverlauf von {titel_name}")
-        plt.xticks(rotation=45)
-        st.pyplot(fig)
+            fig, ax = plt.subplots()
+            ax.plot(plot_df["Datum_fmt"], plot_df["NRS"], marker="o")
+            ax.set_xlabel("Datum")
+            ax.set_ylabel("NRS (Schmerzstärke)")
+            ax.set_ylim(0, 10)
+            titel_name = name_filter if name_filter != "Alle" else "Auswahl"
+            ax.set_title(f"Schmerzverlauf von {titel_name}")
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
+        else:
+            st.info("Keine gültigen NRS-Daten mit Datum vorhanden.")
     else:
-        st.info("Keine gültigen NRS-Daten mit Datum vorhanden.")
-else:
-    st.info("Keine Daten für die gewählte Filterkombination.")
+        st.info("Keine Daten für die gewählte Filterkombination.")
 
 # Tab 3: Verwaltung
 with tab3:
@@ -184,7 +175,7 @@ with tab3:
 
     if st.button("CSV neu laden"):
         try:
-            df = pd.read_csv(CSV_DATEI)
+            df = pd.read_csv(CSV_DATEI, sep=";")
             df = normiere_dataframe(df)
             st.success("CSV neu geladen ✅")
             st.dataframe(df)
@@ -193,7 +184,7 @@ with tab3:
 
     if st.button("Alle Daten löschen"):
         df = leeres_df()
-        df.to_csv(CSV_DATEI, index=False)
+        df.to_csv(CSV_DATEI, index=False, sep=";")
         st.warning("⚠️ Alle Daten gelöscht")
         st.rerun()
 
@@ -203,6 +194,7 @@ with tab3:
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
+
 
 
 
