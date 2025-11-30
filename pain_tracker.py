@@ -1,13 +1,3 @@
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-from datetime import datetime
-import os
-import re
-
-# Seiteneinstellungen
-st.set_page_config(page_title="Schmerzverlauf", layout="centered")
-
 # 🔐 Passwortschutz über st.secrets
 try:
     PASSWORT = st.secrets["app_password"]
@@ -22,9 +12,9 @@ with st.sidebar:
     st.markdown("### Zugang")
     if st.session_state.eingeloggt:
         if st.button("🚪 Logout"):
-        st.session_state.eingeloggt = False
-        st.toast("Erfolgreich ausgeloggt ✅")
-        st.rerun()
+            st.session_state.eingeloggt = False
+            st.toast("Erfolgreich ausgeloggt ✅")
+            st.rerun()
     else:
         st.markdown("🔒 Nicht eingeloggt")
 
@@ -35,10 +25,10 @@ if not st.session_state.eingeloggt:
         st.session_state.eingeloggt = True
         st.toast("Login erfolgreich ✅")
         st.rerun()
-
     elif pw and pw != PASSWORT:
         st.error("❌ Falsches Passwort")
     st.stop()
+
 
 # 🔧 Konstanten
 DATEIPFAD = "schmerzverlauf.csv"
@@ -263,6 +253,7 @@ with tab3:
                     st.experimental_rerun()
                 except Exception as e:
                     st.error(f"❌ Fehler beim Löschen: {e}")
+
 
 
 
