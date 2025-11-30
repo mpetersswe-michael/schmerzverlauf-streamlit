@@ -9,7 +9,11 @@ import re
 st.set_page_config(page_title="Schmerzverlauf", layout="centered")
 
 # 🔐 Passwortschutz über st.secrets
-PASSWORT = st.secrets["app_password"]
+try:
+    PASSWORT = st.secrets["app_password"]
+except KeyError:
+    st.error("⚠️ Kein Passwort in st.secrets gesetzt. Bitte im Secrets-Manager hinterlegen.")
+    st.stop()
 
 if "eingeloggt" not in st.session_state:
     st.session_state.eingeloggt = False
@@ -17,8 +21,9 @@ if "eingeloggt" not in st.session_state:
 with st.sidebar:
     st.markdown("### Zugang")
     if st.session_state.eingeloggt:
-        if st.button("Logout"):
+        if st.button("🚪 Logout"):
             st.session_state.eingeloggt = False
+            st.toast("Erfolgreich ausgeloggt ✅")
             st.experimental_rerun()
     else:
         st.markdown("🔒 Nicht eingeloggt")
@@ -28,7 +33,8 @@ if not st.session_state.eingeloggt:
     pw = st.text_input("Passwort eingeben:", type="password")
     if pw and pw == PASSWORT:
         st.session_state.eingeloggt = True
-        st.success("✅ Login erfolgreich – bitte oben auf „Neu laden“ klicken.")
+        st.toast("Login erfolgreich ✅")
+        st.experimental_rerun()
     elif pw and pw != PASSWORT:
         st.error("❌ Falsches Passwort")
     st.stop()
@@ -256,6 +262,7 @@ with tab3:
                     st.experimental_rerun()
                 except Exception as e:
                     st.error(f"❌ Fehler beim Löschen: {e}")
+
 
 
 
