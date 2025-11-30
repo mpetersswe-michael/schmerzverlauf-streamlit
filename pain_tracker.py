@@ -22,9 +22,9 @@ with st.sidebar:
     st.markdown("### Zugang")
     if st.session_state.eingeloggt:
         if st.button("🚪 Logout"):
-            st.session_state.eingeloggt = False
-            st.toast("Erfolgreich ausgeloggt ✅")
-            st.experimental_rerun()
+        st.session_state.eingeloggt = False
+        st.toast("Erfolgreich ausgeloggt ✅")
+        st.rerun()
     else:
         st.markdown("🔒 Nicht eingeloggt")
 
@@ -34,7 +34,8 @@ if not st.session_state.eingeloggt:
     if pw and pw == PASSWORT:
         st.session_state.eingeloggt = True
         st.toast("Login erfolgreich ✅")
-        st.experimental_rerun()
+        st.rerun()
+
     elif pw and pw != PASSWORT:
         st.error("❌ Falsches Passwort")
     st.stop()
@@ -262,6 +263,7 @@ with tab3:
                     st.experimental_rerun()
                 except Exception as e:
                     st.error(f"❌ Fehler beim Löschen: {e}")
+
 
 
 
