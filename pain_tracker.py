@@ -3,8 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 import os
-from io import BytesIO
-from docx import Document
 
 # ⚙️ Seiteneinstellungen
 st.set_page_config(page_title="Schmerzverlauf", layout="centered")
@@ -165,30 +163,6 @@ with tab3:
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
-
-    # 📘 Word-Dokumentation erstellen
-    if st.button("📘 Word-Dokumentation erstellen"):
-        doc = Document()
-        doc.add_heading("Onboarding & Workflow – Schmerzverlauf App", level=1)
-
-        doc.add_paragraph("✅ Login: Passwort eingeben, Toast bestätigt erfolgreichen Zugang.")
-        doc.add_paragraph("✅ Eingabe: Alle Felder wie im VBA-Formular (Name, Medikament, Region, Dosierung, Schmerzempfinden, Einheit, NRS, Zeitpunkt, Tageszeit, Notizen).")
-        doc.add_paragraph("✅ Speicherung: Einträge werden automatisch mit Zeitstempel gesichert.")
-        doc.add_paragraph("✅ Filter: Dropdowns für Name, Region, Medikament, Tageszeit.")
-        doc.add_paragraph("✅ Diagramm: Verlauf der NRS pro Patient.")
-        doc.add_paragraph("✅ Verwaltung: CSV neu laden, Daten löschen, Backup automatisch.")
-        doc.add_paragraph("✅ Export: CSV-Download jederzeit möglich.")
-
-        buffer = BytesIO()
-        doc.save(buffer)
-        buffer.seek(0)
-
-        st.download_button(
-            label="📘 Word-Dokumentation herunterladen",
-            data=buffer,
-            file_name="Schmerzverlauf_Dokumentation.docx",
-            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-)
 
 
 
