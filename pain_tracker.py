@@ -1,18 +1,24 @@
+# Kritische Modulprüfung mit direktem Import
+try:
+    from docx import Document
+    from docx.shared import Inches
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.utils import ImageReader
+except ImportError as e:
+    import streamlit as st
+    st.error(
+        "❌ Ein benötigtes Modul fehlt: "
+        f"{e.name}. Bitte requirements.txt prüfen und die Umgebung neu bauen."
+    )
+    st.stop()
+
 import io
 import os
 import datetime as dt
-from typing import Tuple
-
 import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-
-from docx import Document
-from docx.shared import Inches
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
-
 
 # ----------------------------
 # Config & constants
@@ -347,6 +353,7 @@ with col_print:
     st.write("Wähle 'Hintergrundgrafiken drucken', damit das Diagramm sichtbar bleibt.")
 
 st.caption("Hinweis: Word/PDF fassen Diagramm und gefilterte Daten zusammen. CSV bleibt der Rohdaten-Export.")
+
 
 
 
