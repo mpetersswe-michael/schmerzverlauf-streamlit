@@ -143,8 +143,17 @@ with tab2:
     if not gefiltert.empty:
         plot_df = gefiltert.copy()
         plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
-        plot_df["Datum"] = pd.to_datetime(plot_df["Zeitpunkt"], errors="coerce")
-        plot_df = plot_df.dropna(subset=["NRS", "Datum"])
+        from dateutil import parser
+
+        def parse_datum(s):
+        try:
+            return parser.parse(s, dayfirst=True).date()
+        except:
+            return None
+
+    plot_df["Datum"] = plot_df["Zeitpunkt"].apply(parse_datum)
+
+    plot_df = plot_df.dropna(subset=["NRS", "Datum"])
 
         if not plot_df.empty:
             plot_df = plot_df.sort_values(by="Datum")
@@ -189,6 +198,7 @@ with tab3:
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
+
 
 
 
