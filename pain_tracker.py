@@ -9,18 +9,10 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 
-
 # ----------------------------
 # Konfiguration & Konstanten
 # ----------------------------
 DATA_FILE = "data.csv"
-
-PAIN_SITUATIONS = [
-    "Vor Einnahme",
-    "Nach Einnahme",
-    "Stabil",
-    "Instabil"
-]
 
 DEFAULT_COLUMNS = [
     "Name",
@@ -30,6 +22,12 @@ DEFAULT_COLUMNS = [
     "Schmerzsituation"
 ]
 
+PAIN_SITUATIONS = [
+    "Vor Einnahme",
+    "Nach Einnahme",
+    "Stabil",
+    "Instabil"
+]
 
 # ----------------------------
 # Hilfsfunktionen
@@ -242,6 +240,7 @@ with col_exp2:
     st.download_button(
         "PDF herunterladen",
         data=pdf_buf,
+
 
 
 
