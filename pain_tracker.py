@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import os
 
-# ⚙️ Seiteneinstellungen
+# Seiteneinstellungen
 st.set_page_config(page_title="Schmerzverlauf", layout="centered")
 
-# 🔐 Passwortschutz
+# Passwortschutz
 try:
     PASSWORT = st.secrets["app_password"]
 except Exception:
@@ -17,28 +17,41 @@ except Exception:
 if "eingeloggt" not in st.session_state:
     st.session_state.eingeloggt = False
 
-# 📂 CSV-Dateien
+# Dateien
 CSV_DATEI = "schmerzverlauf.csv"
 BACKUP_DATEI = "schmerzverlauf_backup.csv"
 
-# 🛡️ Feste Legacy-Spaltenreihenfolge
+# Feste Spaltenreihenfolge (ohne 'Einheit', mit optional 'Notizen' am Ende)
 SPALTEN = [
     "Name", "Körperregion", "Schmerzempfinden", "NRS",
-    "Medikament", "Dosierung", "Einheit",
-    "Zeitpunkt", "Tageszeit", "Notizen"
+    "Tageszeit", "Medikament", "Dosierung",
+    "Zeitpunkt", "Notizen"
 ]
 
 def leeres_df():
     return pd.DataFrame(columns=SPALTEN)
 
-# CSV laden oder neu erstellen
+def normiere_dataframe(df_raw: pd.DataFrame) -> pd.DataFrame:
+    # Fehlende Spalten ergänzen
+    for s in SPALTEN:
+        if s not in df_raw.columns:
+            df_raw[s] = ""
+    # Nur erwartete Spalten und richtige Reihenfolge
+    df = df_raw[SPALTEN].copy()
+    # Typen säubern
+    df["NRS"] = pd.to_numeric(df["NRS"], errors="coerce")
+    # Zeitpunkt als String belassen (Datum wird beim Plot geparst)
+    df["Zeitpunkt"] = df["Zeitpunkt"].astype(str)
+    # Whitespace trimmen in Textfeldern
+    for s in ["Name","Körperregion","Schmerzempfinden","Tageszeit","Medikament","Dosierung","Zeitpunkt","Notizen"]:
+        df[s] = df[s].astype(str).str.strip()
+    return df
+
+# Laden oder neu erstellen
 if os.path.exists(CSV_DATEI):
     try:
         df = pd.read_csv(CSV_DATEI)
-        for s in SPALTEN:
-            if s not in df.columns:
-                df[s] = ""
-        df = df[SPALTEN]
+        df = normiere_dataframe(df)
         st.success(f"✅ {len(df)} Einträge geladen.")
         df.to_csv(BACKUP_DATEI, index=False)
         st.info("📂 Backup gespeichert als 'schmerzverlauf_backup.csv'")
@@ -50,7 +63,7 @@ else:
     df = leeres_df()
     df.to_csv(CSV_DATEI, index=False)
 
-# 🚪 Sidebar: Login/Logout
+# Sidebar Login/Logout
 with st.sidebar:
     st.markdown("### Zugang")
     if st.session_state.eingeloggt:
@@ -62,7 +75,7 @@ with st.sidebar:
     else:
         st.warning("🔒 Nicht eingeloggt")
 
-# 🔐 Login-Fenster
+# Login
 if not st.session_state.eingeloggt:
     st.title("🔐 Login erforderlich")
     pw = st.text_input("Passwort eingeben:", type="password")
@@ -74,79 +87,77 @@ if not st.session_state.eingeloggt:
         st.error("❌ Falsches Passwort")
     st.stop()
 
-# 📊 Tabs
-tab1, tab2, tab3 = st.tabs(["Eingabe", "Daten & Filter", "Verwaltung"])
+# Tabs
+tab1, tab2, tab3 = st.tabs(["Eingabe", "Daten & Diagramm", "Verwaltung"])
 
-# 📝 Tab 1: Eingabe (korrekte Legacy-Zuordnung)
+# Tab 1: Eingabe (exakte Reihenfolge)
 with tab1:
     st.header("Schmerzverlauf erfassen")
 
-    with st.form("eingabe_formular"):
+    with st.form("eingabe_formular", clear_on_submit=True):
         name = st.text_input("Name (Patient)")
         koerperregion = st.text_input("Körperregion")
         schmerzempfinden = st.text_input("Schmerzempfinden")
         nrs = st.number_input("NRS (0–10)", min_value=0, max_value=10, step=1)
+        tageszeit = st.text_input("Tageszeit")
         medikament = st.text_input("Medikament")
         dosierung = st.text_input("Dosierung (z. B. 400)")
-        einheit = st.text_input("Einheit (z. B. mg, Tablette)")
-        # Zeitpunkt automatisch setzen
-        zeitpunkt = datetime.now().strftime("%Y-%m-%d")
-        tageszeit = st.text_input("Tageszeit")
-        notizen = st.text_area("Begleitsymptome / Notizen")
+        # Zeitpunkt automatisch: Datum (YYYY-MM-DD)
+        zeitpunkt_auto = datetime.now().strftime("%Y-%m-%d")
+        notizen = st.text_area("Notizen (frei)")
 
         submitted = st.form_submit_button("➕ Eintrag speichern")
         if submitted:
             neuer_eintrag = pd.DataFrame([{
-                "Name": name,
-                "Körperregion": koerperregion,
-                "Schmerzempfinden": schmerzempfinden,
+                "Name": name.strip(),
+                "Körperregion": koerperregion.strip(),
+                "Schmerzempfinden": schmerzempfinden.strip(),
                 "NRS": nrs,
-                "Medikament": medikament,
-                "Dosierung": dosierung,
-                "Einheit": einheit,
-                "Zeitpunkt": zeitpunkt,   # automatisch Datum
-                "Tageszeit": tageszeit,
-                "Notizen": notizen
-            }])[SPALTEN]
+                "Tageszeit": tageszeit.strip(),
+                "Medikament": medikament.strip(),
+                "Dosierung": dosierung.strip(),
+                "Zeitpunkt": zeitpunkt_auto,
+                "Notizen": notizen.strip()
+            }])
+            neuer_eintrag = normiere_dataframe(neuer_eintrag)
             df = pd.concat([df, neuer_eintrag], ignore_index=True)
             df.to_csv(CSV_DATEI, index=False)
             st.success("✅ Eintrag gespeichert")
             st.rerun()
 
-# 🎛️ Tab 2: Daten & Diagramm
+# Tab 2: Daten & Diagramm
 with tab2:
     st.header("Daten filtern und visualisieren")
 
     def dropdown(spalte, label=None):
         label = label or spalte
-        return st.selectbox(
-            label,
-            ["Alle"] + sorted(df[spalte].dropna().astype(str).unique().tolist())
-        )
+        werte = df[spalte].dropna().astype(str).unique().tolist()
+        werte = [w for w in werte if w.strip() != ""]
+        return st.selectbox(label, ["Alle"] + sorted(werte))
 
     name_filter = dropdown("Name", "Name auswählen")
     region_filter = dropdown("Körperregion", "Region auswählen")
-    medikament_filter = dropdown("Medikament", "Medikament auswählen")
     tageszeit_filter = dropdown("Tageszeit", "Tageszeit auswählen")
+    medikament_filter = dropdown("Medikament", "Medikament auswählen")
 
     gefiltert = df.copy()
     if name_filter != "Alle":
         gefiltert = gefiltert[gefiltert["Name"] == name_filter]
     if region_filter != "Alle":
         gefiltert = gefiltert[gefiltert["Körperregion"] == region_filter]
-    if medikament_filter != "Alle":
-        gefiltert = gefiltert[gefiltert["Medikament"] == medikament_filter]
     if tageszeit_filter != "Alle":
         gefiltert = gefiltert[gefiltert["Tageszeit"] == tageszeit_filter]
+    if medikament_filter != "Alle":
+        gefiltert = gefiltert[gefiltert["Medikament"] == medikament_filter]
 
     st.dataframe(gefiltert)
 
-    # 📊 Diagramm: NRS über Datum
-    if not gefiltert.empty and "NRS" in gefiltert.columns and "Zeitpunkt" in gefiltert.columns:
+    # Diagramm: NRS über Datum (Zeitpunkt)
+    if not gefiltert.empty:
         plot_df = gefiltert.copy()
-        plot_df["Datum"] = pd.to_datetime(plot_df["Zeitpunkt"], errors="coerce").dt.date
         plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
-        plot_df = plot_df.dropna(subset=["Datum", "NRS"])
+        plot_df["Datum"] = pd.to_datetime(plot_df["Zeitpunkt"], errors="coerce").dt.date
+        plot_df = plot_df.dropna(subset=["NRS", "Datum"])
 
         if not plot_df.empty:
             plot_df = plot_df.sort_values(by="Datum")
@@ -161,20 +172,20 @@ with tab2:
         else:
             st.info("Keine gültigen NRS-Daten mit Datum vorhanden.")
     else:
-        st.info("Kein NRS-Verlauf darstellbar.")
+        st.info("Keine Daten für die gewählte Filterkombination.")
 
-# 🗂️ Tab 3: Verwaltung
+# Tab 3: Verwaltung
 with tab3:
     st.header("Verwaltung")
 
     if st.button("CSV neu laden"):
-        df = pd.read_csv(CSV_DATEI)
-        for s in SPALTEN:
-            if s not in df.columns:
-                df[s] = ""
-        df = df[SPALTEN]
-        st.success("CSV neu geladen ✅")
-        st.dataframe(df)
+        try:
+            df = pd.read_csv(CSV_DATEI)
+            df = normiere_dataframe(df)
+            st.success("CSV neu geladen ✅")
+            st.dataframe(df)
+        except Exception as e:
+            st.error(f"Fehler beim Neuladen: {e}")
 
     if st.button("Alle Daten löschen"):
         df = leeres_df()
@@ -188,6 +199,8 @@ with tab3:
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
+
+
 
 
 
