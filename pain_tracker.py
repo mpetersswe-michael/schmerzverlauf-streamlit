@@ -22,27 +22,28 @@ CSV_DATEI = "schmerzverlauf.csv"
 BACKUP_DATEI = "schmerzverlauf_backup.csv"
 
 # 🛡️ Selbstcheck
+SPALTEN = [
+    "Uhrzeit","Name","Medikament","Körperregion","Dosierung",
+    "Schmerzempfinden","Einheit","NRS","Zeitpunkt","Tageszeit","Notizen"
+]
+
 if os.path.exists(CSV_DATEI):
     try:
         df = pd.read_csv(CSV_DATEI)
-        if df.empty:
-            st.warning("⚠️ CSV-Datei ist leer.")
-        else:
-            st.success(f"✅ {len(df)} Einträge geladen.")
-            df.to_csv(BACKUP_DATEI, index=False)
-            st.info("📂 Backup gespeichert als 'schmerzverlauf_backup.csv'")
+        fehlende = [s for s in SPALTEN if s not in df.columns]
+        if fehlende:
+            st.warning(f"⚠️ Fehlende Spalten: {fehlende}")
+            for spalte in fehlende:
+                df[spalte] = ""
+        st.success(f"✅ {len(df)} Einträge geladen.")
+        df.to_csv(BACKUP_DATEI, index=False)
+        st.info("📂 Backup gespeichert als 'schmerzverlauf_backup.csv'")
     except Exception as e:
         st.error(f"❌ Fehler beim Laden: {e}")
-        df = pd.DataFrame(columns=[
-            "Uhrzeit","Name","Medikament","Körperregion","Dosierung",
-            "Schmerzempfinden","Einheit","NRS","Zeitpunkt","Tageszeit","Notizen"
-        ])
+        df = pd.DataFrame(columns=SPALTEN)
 else:
     st.warning("⚠️ Keine CSV gefunden – neue wird erstellt.")
-    df = pd.DataFrame(columns=[
-        "Uhrzeit","Name","Medikament","Körperregion","Dosierung",
-        "Schmerzempfinden","Einheit","NRS","Zeitpunkt","Tageszeit","Notizen"
-    ])
+    df = pd.DataFrame(columns=SPALTEN)
     df.to_csv(CSV_DATEI, index=False)
 
 # 🚪 Sidebar: Login/Logout
@@ -113,10 +114,13 @@ with tab1:
 with tab2:
     st.header("Daten filtern und visualisieren")
 
-    name_filter = st.selectbox("Name", ["Alle"] + sorted(df["Name"].dropna().unique()))
-    region_filter = st.selectbox("Region", ["Alle"] + sorted(df["Körperregion"].dropna().unique()))
-    medikament_filter = st.selectbox("Medikament", ["Alle"] + sorted(df["Medikament"].dropna().unique()))
-    tageszeit_filter = st.selectbox("Tageszeit", ["Alle"] + sorted(df["Tageszeit"].dropna().unique()))
+    def dropdown(spalte):
+        return st.selectbox(spalte, ["Alle"] + sorted(df[spalte].dropna().unique())) if spalte in df.columns else "Alle"
+
+    name_filter = dropdown("Name")
+    region_filter = dropdown("Körperregion")
+    medikament_filter = dropdown("Medikament")
+    tageszeit_filter = dropdown("Tageszeit")
 
     gefiltert = df.copy()
     if name_filter != "Alle":
@@ -130,13 +134,15 @@ with tab2:
 
     st.dataframe(gefiltert)
 
-    if not gefiltert.empty:
+    if "NRS" in gefiltert.columns and not gefiltert.empty:
         fig, ax = plt.subplots()
         ax.plot(gefiltert.index, gefiltert["NRS"], marker="o")
         ax.set_xlabel("Eintrag")
         ax.set_ylabel("NRS")
         ax.set_title(f"Schmerzverlauf von {name_filter if name_filter != 'Alle' else 'Auswahl'}")
         st.pyplot(fig)
+    else:
+        st.info("Kein NRS-Verlauf darstellbar.")
 
 # 🗂️ Tab 3: Verwaltung
 with tab3:
@@ -148,7 +154,7 @@ with tab3:
         st.dataframe(df)
 
     if st.button("Alle Daten löschen"):
-        df = pd.DataFrame(columns=df.columns)
+        df = pd.DataFrame(columns=SPALTEN)
         df.to_csv(CSV_DATEI, index=False)
         st.warning("⚠️ Alle Daten gelöscht")
         st.rerun()
@@ -159,6 +165,7 @@ with tab3:
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
+
 
 
 
