@@ -78,17 +78,17 @@ with tab1:
     st.header("Schmerzverlauf erfassen")
 
     with st.form("eingabe_formular"):
-        name = st.text_input("Name")
+        uhrzeit = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        name = st.text_input("Name (Patient)")
         medikament = st.text_input("Medikament")
         region = st.text_input("Körperregion")
-        dosierung = st.text_input("Dosierung")
+        dosierung = st.text_input("Dosierung (z. B. 400mg)")
         empfinden = st.text_input("Schmerzempfinden")
-        einheit = st.text_input("Einheit")
+        einheit = st.text_input("Einheit (z. B. mg, Tablette)")
         nrs = st.number_input("NRS (0–10)", min_value=0, max_value=10, step=1)
-        zeitpunkt = st.text_input("Zeitpunkt")
+        zeitpunkt = st.text_input("Zeitpunkt (frei oder automatisch)")
         tageszeit = st.text_input("Tageszeit")
-        notizen = st.text_area("Notizen")
-        uhrzeit = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        notizen = st.text_area("Begleitsymptome / Notizen")
 
         submitted = st.form_submit_button("➕ Eintrag speichern")
         if submitted:
@@ -109,6 +109,7 @@ with tab1:
             df.to_csv(CSV_DATEI, index=False)
             st.success("✅ Eintrag gespeichert")
             st.rerun()
+
 
 # 🎛️ Tab 2: Filter & Diagramm
 with tab2:
@@ -187,6 +188,7 @@ with tab3:
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
+
 
 
 
