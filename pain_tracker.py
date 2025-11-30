@@ -7,11 +7,11 @@ import os
 # ⚙️ Seiteneinstellungen
 st.set_page_config(page_title="Schmerzverlauf", layout="centered")
 
-# 🔐 Passwortschutz über st.secrets
+# 🔐 Passwortschutz
 try:
     PASSWORT = st.secrets["app_password"]
 except Exception:
-    st.error("⚠️ Kein Passwort in st.secrets gesetzt. Bitte im Secrets-Manager hinterlegen.")
+    st.error("⚠️ Kein Passwort in st.secrets gesetzt.")
     st.stop()
 
 if "eingeloggt" not in st.session_state:
@@ -21,24 +21,24 @@ if "eingeloggt" not in st.session_state:
 CSV_DATEI = "schmerzverlauf.csv"
 BACKUP_DATEI = "schmerzverlauf_backup.csv"
 
-# 🛡️ Selbstcheck-Routine
+# 🛡️ Selbstcheck
 if os.path.exists(CSV_DATEI):
     try:
         df = pd.read_csv(CSV_DATEI)
         if df.empty:
-            st.warning("⚠️ CSV-Datei ist leer – keine Daten gefunden.")
+            st.warning("⚠️ CSV-Datei ist leer.")
         else:
             st.success(f"✅ {len(df)} Einträge geladen.")
             df.to_csv(BACKUP_DATEI, index=False)
             st.info("📂 Backup gespeichert als 'schmerzverlauf_backup.csv'")
     except Exception as e:
-        st.error(f"❌ Fehler beim Laden der CSV: {e}")
+        st.error(f"❌ Fehler beim Laden: {e}")
         df = pd.DataFrame(columns=[
             "Uhrzeit","Name","Medikament","Körperregion","Dosierung",
             "Schmerzempfinden","Einheit","NRS","Zeitpunkt","Tageszeit","Notizen"
         ])
 else:
-    st.warning("⚠️ Keine CSV-Datei gefunden – neue wird erstellt.")
+    st.warning("⚠️ Keine CSV gefunden – neue wird erstellt.")
     df = pd.DataFrame(columns=[
         "Uhrzeit","Name","Medikament","Körperregion","Dosierung",
         "Schmerzempfinden","Einheit","NRS","Zeitpunkt","Tageszeit","Notizen"
@@ -69,26 +69,24 @@ if not st.session_state.eingeloggt:
         st.error("❌ Falsches Passwort")
     st.stop()
 
-# -------------------------
-# 📊 Tabs für App-Inhalte
-# -------------------------
+# 📊 Tabs
 tab1, tab2, tab3 = st.tabs(["Eingabe", "Daten & Filter", "Verwaltung"])
 
-# 📝 Tab 1: Eingabe (alle Felder)
+# 📝 Tab 1: Eingabe
 with tab1:
     st.header("Schmerzverlauf erfassen")
 
     with st.form("eingabe_formular"):
-        name = st.text_input("Name (Patient)")
+        name = st.text_input("Name")
         medikament = st.text_input("Medikament")
         region = st.text_input("Körperregion")
-        dosierung = st.text_input("Dosierung (z. B. 400 oder 400mg)")
+        dosierung = st.text_input("Dosierung")
         empfinden = st.text_input("Schmerzempfinden")
-        einheit = st.text_input("Einheit (z. B. mg, Tablette…)")
+        einheit = st.text_input("Einheit")
         nrs = st.number_input("NRS (0–10)", min_value=0, max_value=10, step=1)
-        zeitpunkt = st.text_input("Zeitpunkt (frei oder automatisch)")
+        zeitpunkt = st.text_input("Zeitpunkt")
         tageszeit = st.text_input("Tageszeit")
-        notizen = st.text_area("Begleitsymptome / Notizen")
+        notizen = st.text_area("Notizen")
         uhrzeit = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         submitted = st.form_submit_button("➕ Eintrag speichern")
@@ -111,14 +109,14 @@ with tab1:
             st.success("✅ Eintrag gespeichert")
             st.rerun()
 
-# 🎛️ Tab 2: Daten & Filter (Dropdowns)
+# 🎛️ Tab 2: Filter & Diagramm
 with tab2:
     st.header("Daten filtern und visualisieren")
 
-    name_filter = st.selectbox("Name auswählen", options=["Alle"] + sorted(df["Name"].dropna().unique().tolist()))
-    region_filter = st.selectbox("Region auswählen", options=["Alle"] + sorted(df["Körperregion"].dropna().unique().tolist()))
-    medikament_filter = st.selectbox("Medikament auswählen", options=["Alle"] + sorted(df["Medikament"].dropna().unique().tolist()))
-    tageszeit_filter = st.selectbox("Tageszeit auswählen", options=["Alle"] + sorted(df["Tageszeit"].dropna().unique().tolist()))
+    name_filter = st.selectbox("Name", ["Alle"] + sorted(df["Name"].dropna().unique()))
+    region_filter = st.selectbox("Region", ["Alle"] + sorted(df["Körperregion"].dropna().unique()))
+    medikament_filter = st.selectbox("Medikament", ["Alle"] + sorted(df["Medikament"].dropna().unique()))
+    tageszeit_filter = st.selectbox("Tageszeit", ["Alle"] + sorted(df["Tageszeit"].dropna().unique()))
 
     gefiltert = df.copy()
     if name_filter != "Alle":
@@ -137,8 +135,7 @@ with tab2:
         ax.plot(gefiltert.index, gefiltert["NRS"], marker="o")
         ax.set_xlabel("Eintrag")
         ax.set_ylabel("NRS")
-        titel_name = name_filter if name_filter != "Alle" else "Auswahl"
-        ax.set_title(f"Schmerzverlauf von {titel_name}")
+        ax.set_title(f"Schmerzverlauf von {name_filter if name_filter != 'Alle' else 'Auswahl'}")
         st.pyplot(fig)
 
 # 🗂️ Tab 3: Verwaltung
@@ -156,7 +153,6 @@ with tab3:
         st.warning("⚠️ Alle Daten gelöscht")
         st.rerun()
 
-    # 📥 Download-Button für CSV
     st.download_button(
         label="📥 CSV herunterladen",
         data=open(CSV_DATEI, "rb").read(),
