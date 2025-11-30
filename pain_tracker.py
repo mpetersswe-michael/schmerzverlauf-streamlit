@@ -1,228 +1,352 @@
+import io
+import os
+import datetime as dt
+from typing import Tuple
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from dateutil import parser
-import os
 
-st.set_page_config(page_title="Schmerzverlauf", layout="centered")
+from docx import Document
+from docx.shared import Inches
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 
-# Passwortschutz
-try:
-    PASSWORT = st.secrets["app_password"]
-except Exception:
-    st.error("⚠️ Kein Passwort in st.secrets gesetzt.")
-    st.stop()
 
-if "eingeloggt" not in st.session_state:
-    st.session_state.eingeloggt = False
+# ----------------------------
+# Config & constants
+# ----------------------------
+DATA_FILE = "data.csv"
 
-# CSV-Dateien
-CSV_DATEI = "schmerzverlauf.csv"
-BACKUP_DATEI = "schmerzverlauf_backup.csv"
-
-# Feste Spaltenreihenfolge (Legacy, vollständig)
-SPALTEN = [
-    "Name",
-    "Körperregion",
-    "Schmerzempfinden",
-    "NRS",
-    "Tageszeit",
-    "Medikament",
-    "Dosierung",
-    "Zeitpunkt",
-    "Notizen"
+PAIN_SITUATIONS = [
+    "Vor Einnahme",
+    "Nach Einnahme",
+    "Stabil",
+    "Instabil"
 ]
 
-def leeres_df():
-    return pd.DataFrame(columns=SPALTEN)
+DEFAULT_COLUMNS = [
+    "Name",
+    "Datum",
+    "Schmerzintensität",
+    "Bemerkung",
+    "Schmerzsituation"
+]
 
-def normiere_dataframe(df_raw: pd.DataFrame) -> pd.DataFrame:
-    # Fehlende Spalten hinzufügen
-    for s in SPALTEN:
-        if s not in df_raw.columns:
-            df_raw[s] = ""
-    # Nur erwartete Spalten und richtige Reihenfolge
-    df = df_raw[SPALTEN].copy()
 
-    # Typen/Strings normalisieren: Tabs raus, trimmen
-    for s in SPALTEN:
-        df[s] = df[s].astype(str).str.replace("\t", " ").str.strip()
-        # Leerstring statt "nan"
-        df[s] = df[s].replace({"nan": ""})
+# ----------------------------
+# Helpers
+# ----------------------------
+def load_data() -> pd.DataFrame:
+    """Load CSV if exists, else create empty DataFrame with default columns."""
+    if os.path.exists(DATA_FILE):
+        df = pd.read_csv(DATA_FILE, encoding="utf-8")
+        # Ensure required columns exist
+        for col in DEFAULT_COLUMNS:
+            if col not in df.columns:
+                df[col] = ""
+        # Normalize types
+        if "Datum" in df.columns:
+            # Try to parse dates, fallback to string
+            try:
+                df["Datum"] = pd.to_datetime(df["Datum"]).dt.date
+            except Exception:
+                pass
+        return df[DEFAULT_COLUMNS]
+    else:
+        return pd.DataFrame(columns=DEFAULT_COLUMNS)
 
-    # NRS als Zahl
-    df["NRS"] = pd.to_numeric(df["NRS"], errors="coerce")
 
-    # Zeitpunkt bleibt String; Parsing erfolgt erst fürs Plot
-    df["Zeitpunkt"] = df["Zeitpunkt"].astype(str)
+def save_data(df: pd.DataFrame) -> None:
+    """Persist DataFrame to CSV, UTF-8."""
+    df.to_csv(DATA_FILE, index=False, encoding="utf-8")
 
+
+def append_entry(df: pd.DataFrame,
+                 name: str,
+                 date_val: dt.date,
+                 intensity: int,
+                 note: str,
+                 situation: str) -> pd.DataFrame:
+    """Append-only write."""
+    new_row = {
+        "Name": name.strip(),
+        "Datum": date_val,
+        "Schmerzintensität": intensity,
+        "Bemerkung": note.strip(),
+        "Schmerzsituation": situation
+    }
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     return df
 
-def lade_csv(pfad: str) -> pd.DataFrame:
-    if os.path.exists(pfad):
-        df_loaded = pd.read_csv(pfad, sep=";", encoding="utf-8")
-        return normiere_dataframe(df_loaded)
+
+def filter_by_name(df: pd.DataFrame, name_filter: str) -> pd.DataFrame:
+    """Case-insensitive filter by name; empty filter returns all."""
+    if not name_filter:
+        return df.copy()
+    return df[df["Name"].str.contains(name_filter, case=False, na=False)].copy()
+
+
+def plot_pain_over_time(df_filtered: pd.DataFrame) -> io.BytesIO:
+    """Create a line chart for pain intensity over time for the filtered view.
+    Returns PNG bytes buffer for embedding/printing/export.
+    """
+    buf = io.BytesIO()
+    if df_filtered.empty:
+        # Produce a blank figure with message
+        fig, ax = plt.subplots(figsize=(7, 3))
+        ax.text(0.5, 0.5, "Keine Daten für Diagramm", ha="center", va="center")
+        ax.axis("off")
+        fig.tight_layout()
+        fig.savefig(buf, format="png", dpi=150)
+        buf.seek(0)
+        plt.close(fig)
+        return buf
+
+    # Ensure sorting by date for timeline plotting
+    dfp = df_filtered.copy()
+    try:
+        dfp["Datum"] = pd.to_datetime(dfp["Datum"])
+    except Exception:
+        pass
+    dfp = dfp.sort_values("Datum")
+
+    fig, ax = plt.subplots(figsize=(7, 3.5))
+    ax.plot(dfp["Datum"], dfp["Schmerzintensität"], marker="o", linewidth=2, color="#1f77b4")
+    ax.set_title("Schmerzverlauf über Zeit")
+    ax.set_xlabel("Datum")
+    ax.set_ylabel("Intensität (0–10)")
+    ax.set_ylim(0, 10)
+    ax.grid(True, linestyle="--", alpha=0.4)
+    fig.tight_layout()
+    fig.savefig(buf, format="png", dpi=150)
+    buf.seek(0)
+    plt.close(fig)
+    return buf
+
+
+def build_word_document(df_filtered: pd.DataFrame,
+                        chart_png: io.BytesIO,
+                        name_filter: str) -> io.BytesIO:
+    """Create a .docx with filtered table and chart."""
+    doc = Document()
+    title = f"Pain Tracking Bericht"
+    subtitle = f"Filter: Name enthält '{name_filter}'" if name_filter else "Filter: keiner"
+
+    doc.add_heading(title, level=1)
+    doc.add_paragraph(subtitle)
+    doc.add_paragraph(f"Generiert am {dt.datetime.now().strftime('%Y-%m-%d %H:%M')}")
+
+    doc.add_heading("Diagramm", level=2)
+    # Save chart to a temp buffer and add to doc
+    img_buf = io.BytesIO(chart_png.getvalue())
+    doc.add_picture(img_buf, width=Inches(6))
+
+    doc.add_heading("Daten (gefiltert)", level=2)
+    # Add table
+    if df_filtered.empty:
+        doc.add_paragraph("Keine Daten vorhanden.")
     else:
-        df_empty = leeres_df()
-        df_empty.to_csv(pfad, index=False, sep=";", encoding="utf-8")
-        return df_empty
+        table = doc.add_table(rows=1, cols=len(DEFAULT_COLUMNS))
+        # Header row
+        hdr_cells = table.rows[0].cells
+        for i, col in enumerate(DEFAULT_COLUMNS):
+            hdr_cells[i].text = col
 
-# Laden oder neu erstellen + Backup
-try:
-    df = lade_csv(CSV_DATEI)
-    st.success(f"✅ {len(df)} Einträge geladen.")
-    df.to_csv(BACKUP_DATEI, index=False, sep=";", encoding="utf-8")
-    st.info("📂 Backup gespeichert als 'schmerzverlauf_backup.csv'")
-except Exception as e:
-    st.error(f"❌ Fehler beim Laden: {e}")
-    df = leeres_df()
+        for _, row in df_filtered.iterrows():
+            tr = table.add_row().cells
+            for i, col in enumerate(DEFAULT_COLUMNS):
+                tr[i].text = str(row.get(col, ""))
 
-# Sidebar Login
-with st.sidebar:
-    st.markdown("### Zugang")
-    if st.session_state.eingeloggt:
-        st.success("✅ Eingeloggt als Michael")
-        if st.button("🚪 Logout"):
-            st.session_state.eingeloggt = False
-            st.toast("Erfolgreich ausgeloggt ✅")
-            st.rerun()
+    # Output buffer
+    out = io.BytesIO()
+    doc.save(out)
+    out.seek(0)
+    return out
+
+
+def build_pdf(df_filtered: pd.DataFrame,
+              chart_png: io.BytesIO,
+              name_filter: str) -> io.BytesIO:
+    """Create a simple PDF with chart and a compact table using ReportLab."""
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    # Title
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(40, height - 50, "Pain Tracking Bericht")
+    c.setFont("Helvetica", 11)
+    subtitle = f"Filter: Name enthält '{name_filter}'" if name_filter else "Filter: keiner"
+    c.drawString(40, height - 70, subtitle)
+    c.drawString(40, height - 90, f"Generiert am {dt.datetime.now().strftime('%Y-%m-%d %H:%M')}")
+
+    # Chart
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(40, height - 120, "Diagramm")
+    img = ImageReader(chart_png)
+    chart_w = width - 80
+    chart_h = 200
+    c.drawImage(img, 40, height - 120 - chart_h, width=chart_w, height=chart_h, preserveAspectRatio=True)
+
+    # Table header
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(40, height - 350, "Daten (gefiltert)")
+
+    # Table rows (compact listing; for many rows, add pagination)
+    y = height - 370
+    c.setFont("Helvetica", 9)
+    if df_filtered.empty:
+        c.drawString(40, y, "Keine Daten vorhanden.")
     else:
-        st.warning("🔒 Nicht eingeloggt")
+        # Header
+        headers = DEFAULT_COLUMNS
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(40, y, " | ".join(headers))
+        c.setFont("Helvetica", 9)
+        y -= 14
+        for _, row in df_filtered.iterrows():
+            line = " | ".join(str(row.get(col, "")) for col in headers)
+            # Wrap if necessary
+            for chunk in wrap_text(line, max_chars=110):
+                c.drawString(40, y, chunk)
+                y -= 12
+                if y < 60:
+                    c.showPage()
+                    y = height - 60
 
-if not st.session_state.eingeloggt:
-    st.title("🔐 Login erforderlich")
-    pw = st.text_input("Passwort eingeben:", type="password")
-    if pw and pw == PASSWORT:
-        st.session_state.eingeloggt = True
-        st.toast("Login erfolgreich ✅")
-        st.rerun()
-    elif pw and pw != PASSWORT:
-        st.error("❌ Falsches Passwort")
-    st.stop()
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return buffer
 
-# Tabs
-tab1, tab2, tab3 = st.tabs(["Eingabe", "Daten & Diagramm", "Verwaltung"])
 
-# Tab 1: Eingabe
-with tab1:
-    st.header("Schmerzverlauf erfassen")
-
-    with st.form("eingabe_formular", clear_on_submit=True):
-        name = st.text_input("Name (Patient)")
-        koerperregion = st.text_input("Körperregion")
-        schmerzempfinden = st.text_input("Schmerzempfinden")
-        nrs = st.number_input("NRS (0–10)", min_value=0, max_value=10, step=1)
-        tageszeit = st.text_input("Tageszeit")
-        medikament = st.text_input("Medikament")
-        dosierung = st.text_input("Dosierung (z. B. 400)")
-        zeitpunkt = st.text_input("Zeitpunkt (z. B. 30.11.25, 30.11.2025 oder 2025-11-30)")
-        notizen = st.text_area("Notizen (frei)")
-
-        submitted = st.form_submit_button("➕ Eintrag speichern")
-        if submitted:
-            neuer_eintrag = pd.DataFrame([{
-                "Name": name,
-                "Körperregion": koerperregion,
-                "Schmerzempfinden": schmerzempfinden,
-                "NRS": nrs,
-                "Tageszeit": tageszeit,
-                "Medikament": medikament,
-                "Dosierung": dosierung,
-                "Zeitpunkt": zeitpunkt,
-                "Notizen": notizen
-            }])
-            neuer_eintrag = normiere_dataframe(neuer_eintrag)
-            df = pd.concat([df, neuer_eintrag], ignore_index=True)
-            df.to_csv(CSV_DATEI, index=False, sep=";", encoding="utf-8")
-            st.success("✅ Eintrag gespeichert")
-            st.rerun()
-
-# Tab 2: Daten & Diagramm
-with tab2:
-    st.header("Daten filtern und visualisieren")
-
-    def dropdown(spalte, label=None):
-        label = label or spalte
-        werte = df[spalte].dropna().astype(str).unique().tolist()
-        werte = [w for w in werte if w.strip() != ""]
-        return st.selectbox(label, ["Alle"] + sorted(werte))
-
-    name_filter = dropdown("Name", "Name auswählen")
-    region_filter = dropdown("Körperregion", "Körperregion auswählen")
-    tageszeit_filter = dropdown("Tageszeit", "Tageszeit auswählen")
-    medikament_filter = dropdown("Medikament", "Medikament auswählen")
-
-    gefiltert = df.copy()
-    if name_filter != "Alle":
-        gefiltert = gefiltert[gefiltert["Name"] == name_filter]
-    if region_filter != "Alle":
-        gefiltert = gefiltert[gefiltert["Körperregion"] == region_filter]
-    if tageszeit_filter != "Alle":
-        gefiltert = gefiltert[gefiltert["Tageszeit"] == tageszeit_filter]
-    if medikament_filter != "Alle":
-        gefiltert = gefiltert[gefiltert["Medikament"] == medikament_filter]
-
-    st.dataframe(gefiltert)
-
-    # Flexible Datumserkennung
-    def parse_datum(s):
-        try:
-            return parser.parse(s, dayfirst=True).date()
-        except Exception:
-            return None
-
-    # Diagramm: NRS über Datum (Linie verbindet alle Punkte)
-    if not gefiltert.empty:
-        plot_df = gefiltert.copy()
-        plot_df["NRS"] = pd.to_numeric(plot_df["NRS"], errors="coerce")
-        plot_df["Datum"] = plot_df["Zeitpunkt"].apply(parse_datum)
-        plot_df = plot_df.dropna(subset=["NRS", "Datum"])
-
-        if not plot_df.empty:
-            plot_df = plot_df.sort_values(by="Datum")
-            plot_df["Datum_fmt"] = plot_df["Datum"].apply(lambda d: d.strftime("%d.%m.%y"))
-
-            fig, ax = plt.subplots()
-            ax.plot(plot_df["Datum_fmt"], plot_df["NRS"], marker="o", linestyle="-")  # Linie sichtbar
-            ax.set_xlabel("Datum")
-            ax.set_ylabel("NRS (Schmerzstärke)")
-            ax.set_ylim(0, 10)
-            titel_name = name_filter if name_filter != "Alle" else "Auswahl"
-            ax.set_title(f"Schmerzverlauf von {titel_name}")
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
+def wrap_text(text: str, max_chars: int = 90):
+    """Simple word-wrap for PDF lines."""
+    words = text.split()
+    lines = []
+    line = ""
+    for w in words:
+        if len(line) + len(w) + 1 <= max_chars:
+            line = (line + " " + w).strip()
         else:
-            st.info("Keine gültigen NRS-Daten mit Datum vorhanden.")
-    else:
-        st.info("Keine Daten für die gewählte Filterkombination.")
+            lines.append(line)
+            line = w
+    if line:
+        lines.append(line)
+    return lines
 
-# Tab 3: Verwaltung
-with tab3:
-    st.header("Verwaltung")
 
-    if st.button("CSV neu laden"):
-        try:
-            df = lade_csv(CSV_DATEI)
-            st.success("CSV neu geladen ✅")
-            st.dataframe(df)
-        except Exception as e:
-            st.error(f"Fehler beim Neuladen: {e}")
+# ----------------------------
+# Streamlit UI
+# ----------------------------
+st.set_page_config(page_title="Pain Tracking", layout="wide")
 
-    if st.button("Alle Daten löschen"):
-        df = leeres_df()
-        df.to_csv(CSV_DATEI, index=False, sep=";", encoding="utf-8")
-        st.warning("⚠️ Alle Daten gelöscht")
-        st.rerun()
+st.title("Pain Tracking – Hybrid-Frontend")
+st.caption("Append-only, filterbar, druckbar, mit Word-Export und vier Schmerzsituationen.")
 
-    # Download spiegelt exakt die aktuelle Datei (UTF-8, ;)
+# Load or init data
+df = load_data()
+
+# --- Input form
+with st.form(key="input_form", clear_on_submit=False):
+    st.subheader("Neuer Eintrag")
+    col1, col2, col3 = st.columns([2, 1, 1])
+    with col1:
+        name = st.text_input("Name", value="", placeholder="Patientenname")
+    with col2:
+        date_val = st.date_input("Datum", value=dt.date.today())
+    with col3:
+        intensity = st.slider("Schmerzintensität (0–10)", min_value=0, max_value=10, value=5)
+
+    situation = st.radio(
+        "Schmerzsituation:",
+        PAIN_SITUATIONS,
+        horizontal=True
+    )
+
+    note = st.text_area("Bemerkung (optional)", height=80)
+
+    submit = st.form_submit_button("Speichern (append-only)")
+    if submit:
+        # Self-checks
+        errors = []
+        if not name.strip():
+            errors.append("Name ist erforderlich.")
+        if situation not in PAIN_SITUATIONS:
+            errors.append("Ungültige Schmerzsituation.")
+        if errors:
+            st.error("Bitte korrigieren:\n- " + "\n- ".join(errors))
+        else:
+            df = append_entry(df, name, date_val, intensity, note, situation)
+            save_data(df)
+            st.success("Eintrag gespeichert ✅ (append-only)")
+
+st.divider()
+
+# --- Filters & view
+st.subheader("Datenansicht und Diagramm")
+filter_name = st.text_input("Filter nach Name (Teilstring, optional)", value="")
+df_filtered = filter_by_name(df, filter_name)
+
+# Two columns: table and chart
+c_table, c_chart = st.columns([3, 2])
+
+with c_table:
+    st.markdown("**Gefilterte Tabelle**")
+    # Scrollable dataframe; wide mode ensures horizontal/vertical scrolling
+    st.dataframe(df_filtered, use_container_width=True, height=380)
+
+    # CSV download
+    csv_bytes = df_filtered.to_csv(index=False).encode("utf-8")
     st.download_button(
-        label="📥 CSV herunterladen",
-        data=open(CSV_DATEI, "rb").read(),
-        file_name="schmerzverlauf.csv",
+        "CSV herunterladen",
+        data=csv_bytes,
+        file_name=f"pain_tracking_{dt.date.today()}.csv",
         mime="text/csv"
     )
 
+with c_chart:
+    st.markdown("**Diagramm (Schmerzverlauf)**")
+    chart_png = plot_pain_over_time(df_filtered)
+    st.image(chart_png, caption="Linienchart der Schmerzintensität", use_column_width=True)
 
+st.divider()
+
+# --- Exports & printing
+st.subheader("Export und Drucken")
+
+col_exp1, col_exp2, col_print = st.columns([1, 1, 1])
+
+with col_exp1:
+    # Word export
+    word_buf = build_word_document(df_filtered, chart_png, filter_name)
+    st.download_button(
+        "Word (.docx) herunterladen",
+        data=word_buf,
+        file_name=f"pain_report_{dt.date.today()}.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+
+with col_exp2:
+    # PDF export (diagram + compact table)
+    pdf_buf = build_pdf(df_filtered, chart_png, filter_name)
+    st.download_button(
+        "PDF herunterladen",
+        data=pdf_buf,
+        file_name=f"pain_report_{dt.date.today()}.pdf",
+        mime="application/pdf"
+    )
+
+with col_print:
+    # Browser print tips
+    st.markdown("**Drucken (Browser):**")
+    st.write("- Windows: Strg+P")
+    st.write("- macOS: Cmd+P")
+    st.write("Wähle 'Hintergrundgrafiken drucken', damit das Diagramm sichtbar bleibt.")
+
+st.caption("Hinweis: Word/PDF fassen Diagramm und gefilterte Daten zusammen. CSV bleibt der Rohdaten-Export.")
 
 
 
