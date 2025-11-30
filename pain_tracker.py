@@ -109,7 +109,7 @@ with tab1:
             }])
             neuer_eintrag = normiere_dataframe(neuer_eintrag)
             df = pd.concat([df, neuer_eintrag], ignore_index=True)
-            df.to_csv(CSV_DATEI, index=False, sep=";")
+            df.to_csv(CSV_DATEI, index=False, sep=";", encoding="utf-8")
             st.success("✅ Eintrag gespeichert")
             st.rerun()
 
@@ -177,7 +177,7 @@ with tab3:
 
     if st.button("CSV neu laden"):
         try:
-            df = pd.read_csv(CSV_DATEI, sep=";")
+            df = pd.read_csv(CSV_DATEI, sep=";", encoding="utf-8") 
             df = normiere_dataframe(df)
             st.success("CSV neu geladen ✅")
             st.dataframe(df)
@@ -196,6 +196,7 @@ with tab3:
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
+
 
 
 
