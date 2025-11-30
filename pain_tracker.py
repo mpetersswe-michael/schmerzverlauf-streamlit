@@ -21,7 +21,7 @@ CSV_DATEI = "schmerzverlauf.csv"
 BACKUP_DATEI = "schmerzverlauf_backup.csv"
 
 SPALTEN = [
-    "Name", "Koerperregion", "Schmerzempfinden", "NRS",
+    "Name", "Körperregion", "Schmerzempfinden", "NRS",
     "Tageszeit", "Medikament", "Dosierung",
     "Zeitpunkt", "Notizen"
 ]
@@ -37,15 +37,16 @@ def normiere_dataframe(df_raw: pd.DataFrame) -> pd.DataFrame:
     df["NRS"] = pd.to_numeric(df["NRS"], errors="coerce")
     df["Zeitpunkt"] = df["Zeitpunkt"].astype(str)
     for s in SPALTEN:
-        df[s] = df[s].astype(str).str.replace("ö", "oe").str.replace("Ö", "Oe").str.replace("\t", " ").str.strip()
+        df[s] = df[s].astype(str).str.replace("\t", " ").str.strip()
     return df
 
+# Laden oder neu erstellen
 if os.path.exists(CSV_DATEI):
     try:
-        df = pd.read_csv(CSV_DATEI, sep=";")
+        df = pd.read_csv(CSV_DATEI, sep=";", encoding="utf-8")
         df = normiere_dataframe(df)
         st.success(f"✅ {len(df)} Einträge geladen.")
-        df.to_csv(BACKUP_DATEI, index=False, sep=";")
+        df.to_csv(BACKUP_DATEI, index=False, sep=";", encoding="utf-8")
         st.info("📂 Backup gespeichert als 'schmerzverlauf_backup.csv'")
     except Exception as e:
         st.error(f"❌ Fehler beim Laden: {e}")
@@ -53,8 +54,9 @@ if os.path.exists(CSV_DATEI):
 else:
     st.warning("⚠️ Keine CSV gefunden – neue wird erstellt.")
     df = leeres_df()
-    df.to_csv(CSV_DATEI, index=False, sep=";")
+    df.to_csv(CSV_DATEI, index=False, sep=";", encoding="utf-8")
 
+# Sidebar Login
 with st.sidebar:
     st.markdown("### Zugang")
     if st.session_state.eingeloggt:
@@ -77,9 +79,9 @@ if not st.session_state.eingeloggt:
         st.error("❌ Falsches Passwort")
     st.stop()
 
+# Tab 1: Eingabe
 tab1, tab2, tab3 = st.tabs(["Eingabe", "Daten & Diagramm", "Verwaltung"])
 
-# Tab 1: Eingabe
 with tab1:
     st.header("Schmerzverlauf erfassen")
 
@@ -98,7 +100,7 @@ with tab1:
         if submitted:
             neuer_eintrag = pd.DataFrame([{
                 "Name": name,
-                "Koerperregion": koerperregion,
+                "Körperregion": koerperregion,
                 "Schmerzempfinden": schmerzempfinden,
                 "NRS": nrs,
                 "Tageszeit": tageszeit,
@@ -124,7 +126,7 @@ with tab2:
         return st.selectbox(label, ["Alle"] + sorted(werte))
 
     name_filter = dropdown("Name", "Name auswählen")
-    region_filter = dropdown("Koerperregion", "Körperregion auswählen")
+    region_filter = dropdown("Körperregion", "Körperregion auswählen")
     tageszeit_filter = dropdown("Tageszeit", "Tageszeit auswählen")
     medikament_filter = dropdown("Medikament", "Medikament auswählen")
 
@@ -132,7 +134,7 @@ with tab2:
     if name_filter != "Alle":
         gefiltert = gefiltert[gefiltert["Name"] == name_filter]
     if region_filter != "Alle":
-        gefiltert = gefiltert[gefiltert["Koerperregion"] == region_filter]
+        gefiltert = gefiltert[gefiltert["Körperregion"] == region_filter]
     if tageszeit_filter != "Alle":
         gefiltert = gefiltert[gefiltert["Tageszeit"] == tageszeit_filter]
     if medikament_filter != "Alle":
@@ -140,7 +142,6 @@ with tab2:
 
     st.dataframe(gefiltert)
 
-    # Diagramm mit flexibler Datumserkennung
     def parse_datum(s):
         try:
             return parser.parse(s, dayfirst=True).date()
@@ -177,7 +178,7 @@ with tab3:
 
     if st.button("CSV neu laden"):
         try:
-            df = pd.read_csv(CSV_DATEI, sep=";", encoding="utf-8") 
+            df = pd.read_csv(CSV_DATEI, sep=";", encoding="utf-8")
             df = normiere_dataframe(df)
             st.success("CSV neu geladen ✅")
             st.dataframe(df)
@@ -186,7 +187,7 @@ with tab3:
 
     if st.button("Alle Daten löschen"):
         df = leeres_df()
-        df.to_csv(CSV_DATEI, index=False, sep=";")
+        df.to_csv(CSV_DATEI, index=False, sep=";", encoding="utf-8")
         st.warning("⚠️ Alle Daten gelöscht")
         st.rerun()
 
@@ -196,6 +197,7 @@ with tab3:
         file_name="schmerzverlauf.csv",
         mime="text/csv"
     )
+
 
 
 
