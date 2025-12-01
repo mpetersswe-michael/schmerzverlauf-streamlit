@@ -169,12 +169,21 @@ filter_name = st.text_input("Filter nach Name (optional)", value="", key="filter
 
 st.markdown("#### Medikamente")
 df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
-df_filtered_med = filter_by_name(df_med_all, filter_name)
+df filter_by_name_exact(df, name):
+    base = df.copy()
+    base["Name_clean"] = base["Name"].str.strip()
+    if name and name.strip():
+        mask = base["Name_clean"].str.lower() == name.strip().lower()
+        base = base[mask]
+    base = base.drop(columns=["Name_clean"])
+    return base
+
 st.dataframe(df_filtered_med, use_container_width=True, height=300)
 
 st.markdown("#### Schmerzverlauf")
-df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
-df_filtered_pain = filter_by_name(df_pain_all, filter_name)
+df_filtered_med = filter_by_name_exact(df_med_all, filter_name)
+df_filtered_pain = filter_by_name_exact(df_pain_all, filter_name)
+
 st.dataframe(df_filtered_pain, use_container_width=True, height=300)
 csv_pain = to_csv_semicolon(df_filtered_pain)
 st.download_button(
@@ -259,6 +268,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
