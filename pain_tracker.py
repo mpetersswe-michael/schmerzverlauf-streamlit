@@ -240,7 +240,9 @@ with tab3:
     st.subheader("Verlauf und Export")
 
     # Filterfeld für beide Tabellen
-    filter_name = st.text_input("Filter nach Name (optional)", value
+    filter_name = st.text_input("Filter nach Name (optional)", value="")
+
+
 
 
 
