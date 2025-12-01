@@ -214,7 +214,6 @@ st.download_button(
     file_name=f"pain_tracking_{dt.date.today()}.csv",
     mime="text/csv"
 )
-
 # ----------------------------
 # Diagramm ganz am Ende + Download
 # ----------------------------
@@ -234,6 +233,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
