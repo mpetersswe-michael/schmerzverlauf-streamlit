@@ -21,25 +21,21 @@ PAIN_COLUMNS = ["Name", "Datum", "Schmerzstärke", "Art", "Lokalisation", "Begle
 def load_data(file, columns):
     try:
         df = pd.read_csv(file, sep=";", encoding="utf-8-sig")
-        # Spalten erzwingen und Reihenfolge sichern
         for c in columns:
             if c not in df.columns:
                 df[c] = ""
         df = df[columns]
-        # Darstellung robuster: leere Namen als leere Strings statt None
         df["Name"] = df["Name"].fillna("").astype(str)
         return df
     except:
         return pd.DataFrame(columns=columns)
 
 def filter_by_name(df, name):
-    # Robuster Name-Filter: ignoriert leere Namen, Case-insensitive, trims
     base = df.copy()
     base["Name_clean"] = base["Name"].str.strip()
     if name and name.strip():
         mask = base["Name_clean"].str.contains(name.strip(), case=False, na=False)
         base = base[mask]
-    # Keine „None“-Zeilen mehr zeigen (nur Darstellung, CSV bleibt unverändert)
     base = base.drop(columns=["Name_clean"])
     return base
 
@@ -55,11 +51,16 @@ def plot_pain(df):
     dfx = dfx.dropna(subset=["Datum", "Schmerzstärke"]).sort_values("Datum")
     if dfx.empty:
         return None
+
+    # Namen extrahieren (erster eindeutiger Name im Filter)
+    patient_name = dfx["Name"].dropna().unique()
+    name_text = patient_name[0] if len(patient_name) > 0 and patient_name[0].strip() else "Unbekannt"
+
     fig, ax = plt.subplots(figsize=(7, 3.5))
     ax.plot(dfx["Datum"], dfx["Schmerzstärke"], color="#b00020", linewidth=2.0, marker="o", markersize=4)
     ax.set_xlabel("Datum", fontsize=11)
     ax.set_ylabel("Schmerzstärke", fontsize=11)
-    ax.set_title("Schmerzverlauf", fontsize=12)
+    ax.set_title(f"Schmerzverlauf – {name_text}", fontsize=12)
     ax.grid(True, linestyle="--", alpha=0.5)
     ax.tick_params(labelsize=10)
     fig.autofmt_xdate(rotation=20)
@@ -67,17 +68,12 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
-# Auth-Status
+# Startüberschrift mit großem Icon (nur vor Login)
 # ----------------------------
-auth = st.session_state.get("auth", False)
-
-# ----------------------------
-# Startüberschrift mit großem linearem Diagramm-Icon NUR vor Login
-# ----------------------------
-if not auth:
+if "auth" not in st.session_state or not st.session_state["auth"]:
     st.markdown("""
     <div style='display:flex; align-items:center; gap:12px; margin-bottom:20px;'>
-        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#b00020" viewBox="0 0 24 24" aria-label="Line chart icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#b00020" viewBox="0 0 24 24">
             <path d="M3 17l6-6 4 4 8-8v2l-8 8-4-4-6 6z"/>
         </svg>
         <span style='font-size:28px;'>Schmerzverlauf</span>
@@ -87,11 +83,10 @@ if not auth:
 # ----------------------------
 # Login
 # ----------------------------
-password = st.text_input("Login Passwort", type="password", disabled=auth)
-if not auth:
+password = st.text_input("Login Passwort", type="password", disabled=st.session_state.get("auth", False))
+if not st.session_state.get("auth", False):
     if password == "QM1514":
         st.session_state["auth"] = True
-        auth = True
     else:
         st.warning("Bitte Passwort eingeben")
         st.stop()
@@ -113,7 +108,7 @@ st.markdown("---")
 st.markdown("## Eingabe und Verlauf")
 
 # ----------------------------
-# Medikamenten-Eintrag mit Validierung
+# Medikamenten-Eintrag
 # ----------------------------
 st.markdown("### Medikamenten-Eintrag")
 med_name = st.text_input("Name", key="med_name")
@@ -142,7 +137,7 @@ if st.button("Medikament speichern"):
         st.success("Medikament gespeichert.")
 
 # ----------------------------
-# Schmerzverlauf-Eintrag mit Validierung
+# Schmerzverlauf-Eintrag
 # ----------------------------
 st.markdown("### Schmerzverlauf-Eintrag")
 pain_name = st.text_input("Name", key="pain_name")
@@ -185,56 +180,22 @@ if st.button("Schmerzverlauf speichern"):
 # Daten anzeigen und exportieren
 # ----------------------------
 st.markdown("### Daten anzeigen und exportieren")
+filter_name = st.text_input("Filter nach Name (optional)", value="", key="filter_all")
 
-# Optionaler exakter Namensfilter per Auswahl (verhindert Tippfehler)
-df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
-df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
-unique_names = sorted(set(
-    [n for n in df_med_all["Name"].tolist() + df_pain_all["Name"].tolist() if isinstance(n, str) and n.strip()]
-))
-name_pick = st.selectbox("Exakter Name (optional)", [""] + unique_names, index=0)
-text_filter = st.text_input("Filter nach Name (optional, Teilstring)", value="", key="filter_all")
-
-# Medikamente
 st.markdown("#### Medikamente")
-df_med = df_med_all
-if name_pick:
-    df_med = df_med[df_med["Name"].str.strip().str.casefold() == name_pick.strip().casefold()]
-df_med = filter_by_name(df_med, text_filter)
-st.dataframe(df_med, use_container_width=True, height=300)
-csv_med = to_csv_semicolon(df_med)
+df_med = load_data(DATA_FILE_MED, MED_COLUMNS)
+df_filtered_med = filter_by_name(df_med, filter_name)
+st.dataframe(df_filtered_med, use_container_width=True, height=300)
+csv_med = to_csv_semicolon(df_filtered_med)
 st.download_button("CSV Medikamente herunterladen", data=csv_med, file_name=f"medications_{dt.date.today()}.csv", mime="text/csv")
 
-# Schmerzverlauf
 st.markdown("#### Schmerzverlauf")
-df_pain = df_pain_all
-if name_pick:
-    df_pain = df_pain[df_pain["Name"].str.strip().str.casefold() == name_pick.strip().casefold()]
-df_pain = filter_by_name(df_pain, text_filter)
-st.dataframe(df_pain, use_container_width=True, height=300)
-csv_pain = to_csv_semicolon(df_pain)
-st.download_button("CSV Schmerzverlauf herunterladen", data=csv_pain, file_name=f"pain_tracking_{dt.date.today()}.csv", mime="text/csv")
+df_pain = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
+df_filtered_pain = filter_by_name(df_pain, filter_name)
+st.dataframe(df_filtered_pain, use_container_width=True, height=300)
+csv_pain = to_csv_semicolon(df_filtered_pain)
+st.download_button("CSV Schmerzverlauf herunterladen", data=csv_pain, file_name=f"pain_tracking_{dt.date.today()}.csv", mime="text
 
-# ----------------------------
-# Diagramm ganz am Ende + Download
-# ----------------------------
-st.markdown("#### Diagramm")
-chart_fig = plot_pain(df_pain)   # hier wird die Funktion aufgerufen
-
-if chart_fig:
-    st.pyplot(chart_fig)
-    # Download als PNG
-    buf = BytesIO()
-    chart_fig.savefig(buf, format="png", dpi=160, bbox_inches="tight")
-    buf.seek(0)
-    st.download_button(
-        "Diagramm als PNG herunterladen",
-        data=buf,
-        file_name=f"schmerzverlauf_{dt.date.today()}.png",
-        mime="image/png"
-    )
-else:
-    st.info("Keine Daten für das Diagramm vorhanden.")
 
 
 
