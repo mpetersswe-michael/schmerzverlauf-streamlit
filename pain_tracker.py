@@ -241,6 +241,57 @@ if chart_fig:
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
 
+
+# ----------------------------
+# Daten anzeigen und exportieren
+# ----------------------------
+st.markdown("---")
+st.markdown("## Daten anzeigen und exportieren")
+
+# Daten laden
+df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
+df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
+
+# Dropdown-Filter für Medikamente
+filter_name_med = st.selectbox(
+    "Filter nach Name (Medikamente)",
+    options=[""] + sorted(df_med_all["Name"].dropna().str.strip().unique()),
+    index=0,
+    key="filter_med"
+)
+
+# Dropdown-Filter für Schmerzverlauf
+filter_name_pain = st.selectbox(
+    "Filter nach Name (Schmerzverlauf)",
+    options=[""] + sorted(df_pain_all["Name"].dropna().str.strip().unique()),
+    index=0,
+    key="filter_pain"
+)
+
+# Medikamente anzeigen
+st.markdown("### Medikamente")
+df_filtered_med = filter_by_name_exact(df_med_all, filter_name_med)
+st.dataframe(df_filtered_med, use_container_width=True, height=300)
+csv_med = to_csv_semicolon(df_filtered_med)
+st.download_button(
+    "CSV Medikamente herunterladen",
+    data=csv_med,
+    file_name=f"medications_{dt.date.today()}.csv",
+    mime="text/csv"
+)
+
+# Schmerzverlauf anzeigen
+st.markdown("### Schmerzverlauf")
+df_filtered_pain = filter_by_name_exact(df_pain_all, filter_name_pain)
+st.dataframe(df_filtered_pain, use_container_width=True, height=300)
+csv_pain = to_csv_semicolon(df_filtered_pain)
+st.download_button(
+    "CSV Schmerzverlauf herunterladen",
+    data=csv_pain,
+    file_name=f"pain_tracking_{dt.date.today()}.csv",
+    mime="text/csv"
+)
+
 # ----------------------------
 # Datenverwaltung: Löschen mit Passwort
 # ----------------------------
@@ -256,6 +307,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
