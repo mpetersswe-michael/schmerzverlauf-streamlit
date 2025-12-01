@@ -72,7 +72,7 @@ if not st.session_state.get("auth", False):
 
 password = st.text_input("Login Passwort", type="password", disabled=st.session_state.get("auth", False))
 if not st.session_state.get("auth", False):
-    if password == "geheim":
+    if password == "QM1514":
         st.session_state["auth"] = True
     else:
         st.warning("Bitte Passwort eingeben")
@@ -202,6 +202,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
