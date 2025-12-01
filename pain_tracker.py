@@ -268,13 +268,13 @@ with tab3:
     )
 
     # Seitenumbruch → Seite 2
-    st.markdown("<div style='page-break-before: always'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='page-break-before: always;'></div>", unsafe_allow_html=True)
 
     # Seite 2: Schmerzverlauf
     st.markdown("### Gefilterte Tabelle – Schmerzverlauf")
     df_pain = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
     df_filtered_pain = filter_by_name(df_pain, filter_name)
-    st.dataframe(df_filtered_pain, use_container_width=True, height=280)
+    st.dataframe(df_filtered_pain, use_container_width=True, height=600)  # bewusst höher für PDF-Seite
 
     csv_pain = df_filtered_pain.to_csv(index=False).encode("utf-8")
     st.download_button(
@@ -287,9 +287,14 @@ with tab3:
     # Kompaktes Diagramm (kleiner, feste Breite)
     st.markdown("### Diagramm – Schmerzverlauf")
     chart_png = plot_pain(df_filtered_pain)  # in plot_pain: figsize=(3.2, 1.6)
-    st.image(chart_png, caption="Liniendiagramm", width=300)  # feste Breite
+    st.image(chart_png, caption="Liniendiagramm", width=280)  # feste Breite, nicht container_width
 
     st.divider()
     st.subheader("Druck-Hinweis")
     st.info("Mit dem Button oben öffnet sich der Druckdialog. "
+            "Seite 1 enthält die Medikamentenliste, Seite 2 den Schmerzverlauf und das kompakte Diagramm.")
+
+    st.subheader("Druck-Hinweis")
+    st.info("Mit dem Button oben öffnet sich der Druckdialog. "
             "Seite 1 enthält die Medikamentenliste, Seite 2 den Schmerzverlauf und das Diagramm.")
+
