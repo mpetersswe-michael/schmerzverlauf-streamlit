@@ -236,7 +236,7 @@ with tab2:
                 st.success("Eintrag gespeichert ✅")
 
 # ----------------------------
-# Tab 3: Verlauf / Export – beide Tabellen
+# Tab 3: Verlauf / Export – Schmerzverlauf + Medikamentenliste
 # ----------------------------
 with tab3:
     st.subheader("Verlauf und Export")
@@ -267,26 +267,23 @@ with tab3:
 
     st.divider()
 
-    # Medikamenten-Daten (volle Breite unterhalb)
-df_med = load_data(DATA_FILE_MED, MED_COLUMNS)
-st.markdown("**Tabelle – Medikamentenliste**")
-st.dataframe(df_med, use_container_width=True, height=240)
+    # Medikamenten-Daten laden und anzeigen
+    st.markdown("**Tabelle – Medikamentenliste**")
+    df_med = load_data(DATA_FILE_MED, ["Datum", "Medikament", "Dosierung", "Art"])
+    st.dataframe(df_med, use_container_width=True, height=240)
 
-csv_med = df_med.to_csv(index=False).encode("utf-8")
-st.download_button(
-    "CSV Medikamente herunterladen",
-    data=csv_med,
-    file_name=f"medications_{dt.date.today()}.csv",
-    mime="text/csv"
-)
+    csv_med = df_med.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        "CSV Medikamente herunterladen",
+        data=csv_med,
+        file_name=f"medications_{dt.date.today()}.csv",
+        mime="text/csv"
+    )
+
     st.divider()
     st.subheader("Druck-Hinweis")
     st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
             "Die Tabellen und das Diagramm sind direkt sichtbar.")
-
-
-
-
 
 
 
