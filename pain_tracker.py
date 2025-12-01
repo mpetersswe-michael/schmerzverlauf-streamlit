@@ -94,6 +94,16 @@ with st.sidebar:
 st.markdown("---")
 
 # ----------------------------
+# Daten löschen
+# ----------------------------
+if st.button("🗑️ Daten löschen"):
+    # Medikamente leeren
+    pd.DataFrame(columns=MED_COLUMNS).to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
+    # Schmerzverlauf leeren
+    pd.DataFrame(columns=PAIN_COLUMNS).to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
+    st.success("Alle gespeicherten Daten wurden gelöscht.")
+
+# ----------------------------
 # Daten anzeigen und exportieren
 # ----------------------------
 st.markdown("## Daten anzeigen und exportieren")
@@ -158,6 +168,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
