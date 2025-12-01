@@ -194,7 +194,9 @@ df_pain = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
 df_filtered_pain = filter_by_name(df_pain, filter_name)
 st.dataframe(df_filtered_pain, use_container_width=True, height=300)
 csv_pain = to_csv_semicolon(df_filtered_pain)
-st.download_button("CSV Schmerzverlauf herunterladen", data=csv_pain, file_name=f"pain_tracking_{dt.date.today()}.csv", mime="text
+st.download_button("CSV Schmerzverlauf herunterladen", data=csv_pain, file_name=f"pain_tracking_{dt.date.today()}.csv", mime="text/csv")
+
+
 
 
 
