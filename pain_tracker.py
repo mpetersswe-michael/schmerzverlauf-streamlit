@@ -13,10 +13,27 @@ DATA_FILE_MED = "med_data.csv"
 VALID_PASSWORD = "QM1514"
 SESSION_KEY_AUTH = "is_authenticated"
 
-PAIN_COLUMNS = ["Name", "Datum", "Intensität", "Körperregion", "Bemerkung", "Situation"]
+# Tab 1: Schmerz-Eintrag – vollständiges Feldset
+PAIN_COLUMNS = [
+    "Name",
+    "Datum",
+    "Intensität",
+    "Körperregion",
+    "Schmerzempfinden",
+    "Begleitsymptome",
+    "Tageszeit",
+    "Schmerzeintritt",
+    "Schmerzsituation",
+    "Bemerkung"
+]
+
+# Tab 2: Medikamente – reduziertes Feldset
 MED_COLUMNS = ["Datum", "Medikament", "Dosierung", "Art"]
 
-PAIN_SITUATIONS = ["Vor Einnahme", "Nach Einnahme", "Stabil", "Instabil"]
+# Auswahllisten
+SCHMERZEMPFINDEN_OPTS = ["brennend", "dumpf", "stechend", "ziehend", "pochend"]
+BEGLEITSYMPTOME_OPTS = ["Übelkeit", "Schwindel", "Müdigkeit", "Fieber", "Erbrechen"]
+TAGESZEIT_OPTS = ["morgens", "mittags", "abends", "nachts"]
 MED_TYPES = ["Bedarfsmedikation", "Dauermedikation"]
 
 # ----------------------------
@@ -68,13 +85,15 @@ def append_row(df, row_dict):
     return pd.concat([df, pd.DataFrame([row_dict])], ignore_index=True)
 
 def filter_by_name(df, name_filter):
+    if "Name" not in df.columns:
+        return df.copy()
     if not name_filter:
         return df.copy()
     return df[df["Name"].str.contains(name_filter, case=False, na=False)].copy()
 
 def plot_pain(df_filtered):
     buf = io.BytesIO()
-    if df_filtered.empty:
+    if df_filtered.empty or "Intensität" not in df_filtered.columns:
         fig, ax = plt.subplots(figsize=(7, 3))
         ax.text(0.5, 0.5, "Keine Daten für Diagramm", ha="center", va="center")
         ax.axis("off")
@@ -118,7 +137,7 @@ sidebar_logout()
 tab1, tab2, tab3 = st.tabs(["📋 Eintrag", "💊 Medikamente", "📈 Verlauf"])
 
 # ----------------------------
-# Tab 1: Schmerz-Eintrag
+# Tab 1: Schmerz-Eintrag (mit Körperregion, Schmerzempfinden, Begleitsymptome, Tageszeit, Schmerzeintritt, Schmerzsituation)
 # ----------------------------
 with tab1:
     st.subheader("Neuer Schmerz-Eintrag")
@@ -134,28 +153,57 @@ with tab1:
             intensity = st.slider("Intensität (0–10)", min_value=0, max_value=10, value=5)
 
         region = st.text_input("Körperregion", placeholder="z. B. Kopf, Rücken, Bein")
-        situation = st.radio("Situation", PAIN_SITUATIONS, horizontal=True)
+
+        pain_feel = st.multiselect("Schmerzempfinden", options=SCHMERZEMPFINDEN_OPTS)
+        symptoms = st.multiselect("Begleitsymptome", options=BEGLEITSYMPTOME_OPTS)
+
+        time_of_day = st.selectbox("Tageszeit", options=TAGESZEIT_OPTS, index=0)
+
+        st.markdown("**Schmerzeintritt**")
+        entry_before = st.checkbox("Schmerzeintritt vor Einnahme eines Medikamentes")
+        entry_after = st.checkbox("Schmerzeintritt nach Einnahme eines Medikamentes")
+
+        st.markdown("**Schmerzsituation**")
+        situation_stable = st.checkbox("Schmerzsituation ist stabil")
+        situation_unstable = st.checkbox("Schmerzsituation ist instabil")
+
         note = st.text_area("Bemerkung (optional)", height=80)
+
         submit = st.form_submit_button("Speichern (append-only)")
 
         if submit:
             if not name.strip():
                 st.error("Name ist erforderlich.")
             else:
+                entry_list = []
+                if entry_before:
+                    entry_list.append("vor Einnahme eines Medikamentes")
+                if entry_after:
+                    entry_list.append("nach Einnahme eines Medikamentes")
+                situation_list = []
+                if situation_stable:
+                    situation_list.append("stabil")
+                if situation_unstable:
+                    situation_list.append("instabil")
+
                 new_row = {
                     "Name": name.strip(),
                     "Datum": date_val,
                     "Intensität": intensity,
                     "Körperregion": region.strip(),
+                    "Schmerzempfinden": ", ".join(pain_feel),
+                    "Begleitsymptome": ", ".join(symptoms),
+                    "Tageszeit": time_of_day,
+                    "Schmerzeintritt": ", ".join(entry_list),
+                    "Schmerzsituation": ", ".join(situation_list),
                     "Bemerkung": note.strip(),
-                    "Situation": situation
                 }
                 df_pain = append_row(df_pain, new_row)
                 save_data(df_pain, DATA_FILE_PAIN)
                 st.success("Eintrag gespeichert ✅")
 
 # ----------------------------
-# Tab 2: Medikamenten-Eintrag
+# Tab 2: Medikamenten-Eintrag (ohne Patientenname, Art mit Mehrfachauswahl)
 # ----------------------------
 with tab2:
     st.subheader("Medikamenten-Eintrag")
@@ -200,7 +248,7 @@ with tab3:
     c_table, c_chart = st.columns([3, 2])
     with c_table:
         st.markdown("**Gefilterte Tabelle**")
-        st.dataframe(df_filtered, use_container_width=True, height=380)
+        st.dataframe(df_filtered, use_container_width=True, height=420)
 
         csv_bytes = df_filtered.to_csv(index=False).encode("utf-8")
         st.download_button(
@@ -219,6 +267,8 @@ with tab3:
     st.subheader("Druck-Hinweis")
     st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
             "Die Tabelle und das Diagramm sind direkt sichtbar.")
+
+
 
 
 
