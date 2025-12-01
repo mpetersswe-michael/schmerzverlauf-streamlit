@@ -239,15 +239,10 @@ with tab2:
 with tab3:
     st.subheader("Verlauf und Export")
 
-    # Druck-Button
+    # Druck-Button (öffnet Browser-Druckdialog)
     st.markdown(
         """
-        <script>
-        function printPage() {
-            window.print();
-        }
-        </script>
-        <button onclick="printPage()">🖨️ Drucken</button>
+        <button onclick="window.print()">🖨️ Drucken</button>
         """,
         unsafe_allow_html=True
     )
@@ -286,8 +281,13 @@ with tab3:
         mime="text/csv"
     )
 
-    # Kompaktes Diagramm
+    # Kompaktes Diagramm (kleiner, feste Breite)
     st.markdown("### Diagramm – Schmerzverlauf")
-    chart_png = plot_pain(df_filtered_pain)  # in plot_pain: figsize=(4.5, 2.2)
-    st.image(chart_png, caption="Liniendiagramm", use_column_width=True)
+    chart_png = plot_pain(df_filtered_pain)  # in plot_pain: figsize=(3.5, 1.8)
+    st.image(chart_png, caption="Liniendiagramm", width=350)  # feste Breite, nicht container_width
+
+    st.divider()
+    st.subheader("Druck-Hinweis")
+    st.info("Mit dem Button oben öffnet sich der Druckdialog. "
+            "Seite 1 enthält die Medikamentenliste, Seite 2 den Schmerzverlauf und das Diagramm.")
 
