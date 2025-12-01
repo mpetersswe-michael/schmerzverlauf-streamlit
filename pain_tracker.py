@@ -15,27 +15,12 @@ MED_COLUMNS = ["Name", "Datum", "Medikament", "Typ"]
 PAIN_COLUMNS = ["Name", "Datum", "Schmerzstärke", "Art", "Lokalisation", "Begleitsymptome", "Bemerkung"]
 
 # ----------------------------
-# CSS
-# ----------------------------
-st.markdown("""
-<style>
-thead tr th {
-    padding-top: 12px !important;
-    padding-bottom: 12px !important;
-    font-weight: 400 !important;
-}
-tbody tr td {
-    font-weight: 400 !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ----------------------------
 # Hilfsfunktionen
 # ----------------------------
 def load_data(file, columns):
     try:
         df = pd.read_csv(file, sep=";", encoding="utf-8-sig")
+        # Spalten erzwingen
         for c in columns:
             if c not in df.columns:
                 df[c] = ""
@@ -70,11 +55,13 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
-# Startüberschrift mit Icon
+# Startüberschrift mit großem Icon
 # ----------------------------
 st.markdown("""
 <div style='display:flex; align-items:center; gap:12px; margin-bottom:20px;'>
-    <img src='https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Line_chart_icon.svg/120px-Line_chart_icon.svg.png' width='32'>
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#b00020" viewBox="0 0 24 24">
+        <path d="M3 17l6-6 4 4 8-8v2l-8 8-4-4-6 6z"/>
+    </svg>
     <span style='font-size:28px;'>Schmerzverlauf</span>
 </div>
 """, unsafe_allow_html=True)
@@ -98,7 +85,7 @@ with st.sidebar:
         st.stop()
 
 # ----------------------------
-# Optische Trennung
+# Optische Trennung nach Login
 # ----------------------------
 st.markdown("---")
 st.markdown("## Eingabe und Verlauf")
@@ -201,6 +188,8 @@ if chart_fig:
     st.pyplot(chart_fig)
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
+
 
 
 
