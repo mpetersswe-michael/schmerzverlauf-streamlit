@@ -28,7 +28,7 @@ PAIN_COLUMNS = [
 ]
 
 # Tab 2: Medikamente – reduziertes Feldset
-MED_COLUMNS = ["Datum", "Medikament", "Dosierung", "Art"]
+MED_COLUMNS = ["Name", "Datum", "Medikament", "Dosierung", "Art"]
 
 # Auswahllisten
 SCHMERZEMPFINDEN_OPTS = ["brennend", "dumpf", "stechend", "ziehend", "pochend"]
@@ -212,20 +212,22 @@ with tab2:
     with st.form("med_form"):
         col1, col2 = st.columns([2, 1])
         with col1:
-            med = st.text_input("Medikament")
+            name = st.text_input("Name", value="", placeholder="Patientenname")
         with col2:
-            dose = st.text_input("Dosierung")
+            date_val = st.date_input("Datum", value=dt.date.today())
 
-        date_val = st.date_input("Datum", value=dt.date.today())
+        med = st.text_input("Medikament")
+        dose = st.text_input("Dosierung")
         med_types_selected = st.multiselect("Art", options=MED_TYPES)
 
         submit = st.form_submit_button("Speichern (append-only)")
 
         if submit:
-            if not med.strip():
-                st.error("Medikament ist erforderlich.")
+            if not med.strip() or not name.strip():
+                st.error("Name und Medikament sind erforderlich.")
             else:
                 new_row = {
+                    "Name": name.strip(),
                     "Datum": date_val,
                     "Medikament": med.strip(),
                     "Dosierung": dose.strip(),
@@ -284,6 +286,7 @@ with tab3:
     st.subheader("Druck-Hinweis")
     st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
             "Die Tabellen und das Diagramm sind direkt sichtbar.")
+
 
 
 
