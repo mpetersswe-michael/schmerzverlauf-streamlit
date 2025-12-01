@@ -242,7 +242,7 @@ with tab3:
     # Filterfeld für beide Tabellen
     filter_name = st.text_input("Filter nach Name (optional)", value="")
 
-    # Medikamentenliste zuerst
+    # Medikamentenliste zuerst (Seite 1)
     st.markdown("### Verabreichte Medikamente und den Patientennamen")
     df_med = load_data(DATA_FILE_MED, MED_COLUMNS)
     df_filtered_med = filter_by_name(df_med, filter_name)
@@ -256,9 +256,10 @@ with tab3:
         mime="text/csv"
     )
 
-    st.divider()
+    # Seitenumbruch für PDF-Druck → Schmerzverlauf ab Seite 2
+    st.markdown("<div style='page-break-before: always'></div>", unsafe_allow_html=True)
 
-    # Schmerzverlauf-Tabelle
+    # Schmerzverlauf-Tabelle (Seite 2)
     st.markdown("### Gefilterte Tabelle – Schmerzverlauf")
     df_pain = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
     df_filtered_pain = filter_by_name(df_pain, filter_name)
@@ -274,9 +275,9 @@ with tab3:
 
     st.divider()
 
-    # Diagramm ganz unten
+    # Diagramm ganz unten (Seite 2, kleiner)
     st.markdown("### Diagramm – Schmerzverlauf")
-    chart_png = plot_pain(df_filtered_pain)
+    chart_png = plot_pain(df_filtered_pain)  # in plot_pain: figsize=(5, 2.5)
     st.image(chart_png, caption="Liniendiagramm", use_column_width=True)
 
     st.divider()
@@ -284,17 +285,7 @@ with tab3:
     st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
             "Die Tabellen und das Diagramm sind direkt sichtbar.")
 
-    # Button für Rückkehr nach PDF-Druck
+    # Rückkehr-Button, falls PDF im selben Tab geöffnet wurde
     if st.button("Zurück zur App"):
         st.rerun()
-
-
-
-
-
-
-
-
-
-
 
