@@ -34,7 +34,6 @@ def filter_by_name_exact(df, name):
     base = base.drop(columns=["Name_clean"])
     return base
 
-
 def to_csv_semicolon(df):
     return df.to_csv(index=False, sep=";", encoding="utf-8-sig").encode("utf-8-sig")
 
@@ -73,7 +72,7 @@ if not st.session_state.get("auth", False):
 
 password = st.text_input("Login Passwort", type="password", disabled=st.session_state.get("auth", False))
 if not st.session_state.get("auth", False):
-    if password == "QM1514":
+    if password == "geheim":
         st.session_state["auth"] = True
     else:
         st.warning("Bitte Passwort eingeben")
@@ -89,7 +88,6 @@ with st.sidebar:
 st.markdown("---")
 st.markdown("## Eingabe und Verlauf")
 
-# ✏️ Neuer Eintrag-Button
 if st.button("✏️ Neuer Eintrag"):
     for key in ["med_name", "med_drug", "pain_name", "pain_notes"]:
         st.session_state[key] = ""
@@ -146,74 +144,8 @@ pain_notes = st.text_area("Bemerkungen", key="pain_notes")
 if st.button("Schmerzverlauf speichern"):
     if not pain_name.strip():
         st.warning("Bitte einen Namen eingeben.")
-    else:
-        new_pain = pd.DataFrame([{
-            "Name": pain_name.strip(),
-            "Datum": pain_date.strftime("%Y-%m-%d"),
-            "Schmerzstärke": pain_level,
-            "Art": ", ".join(pain_types),
-            "Lokalisation": ", ".join(pain_locations),
-            "Begleitsymptome": ", ".join(pain_symptoms),
-            "Bemerkung": pain_notes.strip()
-        }])
-        try:
-            existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
-        except:
-            existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
-        updated_pain = pd.concat([existing_pain, new_pain], ignore_index=True)
-        updated_pain.to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
-        st.success("Schmerzverlauf gespeichert.")
-
-st.markdown("### Daten anzeigen und exportieren")
-filter_name = st.text_input("Filter nach Name (optional)", value="", key="filter_all")
-
-st.markdown("#### Medikamente")
-df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
-df filter_by_name_exact(df, name):
-    base = df.copy()
-    base["Name_clean"] = base["Name"].str.strip()
-    if name and name.strip():
-        mask = base["Name_clean"].str.lower() == name.strip().lower()
-        base = base[mask]
-    base = base.drop(columns=["Name_clean"])
-    return base
-
-st.dataframe(df_filtered_med, use_container_width=True, height=300)
-
-st.markdown("#### Schmerzverlauf")
-df_filtered_med = filter_by_name_exact(df_med_all, filter_name)
-df_filtered_pain = filter_by_name_exact(df_pain_all, filter_name)
-
-st.dataframe(df_filtered_pain, use_container_width=True, height=300)
-csv_pain = to_csv_semicolon(df_filtered_pain)
-st.download_button(
-    "CSV Schmerzverlauf herunterladen",
-    data=csv_pain,
-    file_name=f"pain_tracking_{dt.date.today()}.csv",
-    mime="text/csv"
-)
-
-# ----------------------------
-# Daten anzeigen und exportieren
-# ----------------------------
-st.markdown("### Daten anzeigen und exportieren")
-filter_name = st.text_input("Filter nach Name (exakt)", value="", key="filter_all")
-
-# Medikamente
-st.markdown("#### Medikamente")
-df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
-df_filtered_med = filter_by_name_exact(df_med_all, filter_name)
-st.dataframe(df_filtered_med, use_container_width=True, height=300)
-csv_med = to_csv_semicolon(df_filtered_med)
-st.download_button(
-    "CSV Medikamente herunterladen",
-    data=csv_med,
-    file_name=f"medications_{dt.date.today()}.csv",
-    mime="text/csv"
-)
-
-# Schmerzverlauf
-st.markdown("#### Schmerzverlauf")
+    else
+    st.markdown("#### Schmerzverlauf")
 df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
 df_filtered_pain = filter_by_name_exact(df_pain_all, filter_name)
 st.dataframe(df_filtered_pain, use_container_width=True, height=300)
@@ -246,28 +178,6 @@ else:
     st.info("Keine Daten für das Diagramm vorhanden.")
 
 
-
-
-
-# ----------------------------
-# Diagramm ganz am Ende + Download
-# ----------------------------
-st.markdown("#### Diagramm")
-chart_fig = plot_pain(df_filtered_pain)
-
-if chart_fig:
-    st.pyplot(chart_fig)
-    buf = BytesIO()
-    chart_fig.savefig(buf, format="png", dpi=160, bbox_inches="tight")
-    buf.seek(0)
-    st.download_button(
-        "Diagramm als PNG herunterladen",
-        data=buf,
-        file_name=f"schmerzverlauf_{dt.date.today()}.png",
-        mime="image/png"
-    )
-else:
-    st.info("Keine Daten für das Diagramm vorhanden.")
 
 
 
