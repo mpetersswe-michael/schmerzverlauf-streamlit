@@ -13,7 +13,7 @@ DEFAULT_COLUMNS = ["Name", "Datum", "Schmerzintensität", "Bemerkung", "Schmerzs
 PAIN_SITUATIONS = ["Vor Einnahme", "Nach Einnahme", "Stabil", "Instabil"]
 
 # Nur ein Passwort nötig
-VALID_PASSWORD = "pain2025"
+VALID_PASSWORD = "QM1514"
 SESSION_KEY_AUTH = "is_authenticated"
 
 # ----------------------------
@@ -114,6 +114,16 @@ def sidebar_logout():
 # ----------------------------
 st.set_page_config(page_title="Pain Tracking", layout="wide")
 st.title("Pain Tracking – Login, Erfassung, Ansicht")
+st.set_page_config(page_title="Pain Tracking", layout="wide")
+st.title("Pain Tracking – Login, Erfassung, Ansicht")
+
+# Auth-Gate mit zentralem Login
+if not st.session_state.get(SESSION_KEY_AUTH, False):
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        login_form()
+    st.stop()
+
 
 # Auth-Gate
 if not st.session_state.get(SESSION_KEY_AUTH, False):
@@ -177,6 +187,7 @@ st.divider()
 st.subheader("Druck-Hinweis")
 st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
         "Die Tabelle und das Diagramm sind direkt sichtbar.")
+
 
 
 
