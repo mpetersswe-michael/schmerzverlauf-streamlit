@@ -53,21 +53,19 @@ def plot_pain(df):
     if dfx.empty:
         return None
 
-    # Namen extrahieren
+    # Patientenname für den Titel
     patient_name = dfx["Name"].dropna().unique()
-    name_text = patient_name[0] if len(patient_name) > 0 and patient_name[0].strip() else "Unbekannt"
+    name_text = patient_name[0].strip() if len(patient_name) > 0 and isinstance(patient_name[0], str) and patient_name[0].strip() else "Unbekannt"
 
-    fig, ax = plt.subplots(figsize=(6, 3))  # kleineres Diagramm
+    # Diagramm kompakter (5x2.5) mit deutscher Datumsachse
+    fig, ax = plt.subplots(figsize=(5, 2.5))
     ax.plot(dfx["Datum"], dfx["Schmerzstärke"], color="#b00020", linewidth=2.0, marker="o", markersize=4)
     ax.set_xlabel("Datum", fontsize=11)
     ax.set_ylabel("Schmerzstärke", fontsize=11)
     ax.set_title(f"Schmerzverlauf – {name_text}", fontsize=12)
     ax.grid(True, linestyle="--", alpha=0.5)
     ax.tick_params(labelsize=9)
-
-    # 👉 Datumsformat auf der Achse anpassen
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%d-%m-%Y"))
-
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%d-%m-%Y"))  # deutsches Format
     fig.autofmt_xdate(rotation=20)
     fig.tight_layout()
     return fig
@@ -75,7 +73,7 @@ def plot_pain(df):
 # ----------------------------
 # Startüberschrift mit großem Icon (nur vor Login)
 # ----------------------------
-if "auth" not in st.session_state or not st.session_state["auth"]:
+if not st.session_state.get("auth", False):
     st.markdown("""
     <div style='display:flex; align-items:center; gap:12px; margin-bottom:20px;'>
         <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#b00020" viewBox="0 0 24 24">
@@ -187,15 +185,46 @@ if st.button("Schmerzverlauf speichern"):
 st.markdown("### Daten anzeigen und exportieren")
 filter_name = st.text_input("Filter nach Name (optional)", value="", key="filter_all")
 
+# Medikamente
 st.markdown("#### Medikamente")
-df_med = load_data(DATA_FILE_MED, MED_COLUMNS)
-df_filtered_med = filter_by_name(df_med, filter_name)
+df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
+df_filtered_med = filter_by_name(df_med_all, filter_name)
 st.dataframe(df_filtered_med, use_container_width=True, height=300)
 csv_med = to_csv_semicolon(df_filtered_med)
 st.download_button("CSV Medikamente herunterladen", data=csv_med, file_name=f"medications_{dt.date.today()}.csv", mime="text/csv")
 
+# Schmerzverlauf
 st.markdown("#### Schmerzverlauf")
-df_p
+df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
+df_filtered_pain = filter_by_name(df_pain_all, filter_name)
+st.dataframe(df_filtered_pain, use_container_width=True, height=300)
+csv_pain = to_csv_semicolon(df_filtered_pain)
+st.download_button(
+    "CSV Schmerzverlauf herunterladen",
+    data=csv_pain,
+    file_name=f"pain_tracking_{dt.date.today()}.csv",
+    mime="text/csv"
+)
+
+# ----------------------------
+# Diagramm ganz am Ende + Download
+# ----------------------------
+st.markdown("#### Diagramm")
+chart_fig = plot_pain(df_filtered_pain)
+
+if chart_fig:
+    st.pyplot(chart_fig)
+    buf = BytesIO()
+    chart_fig.savefig(buf, format="png", dpi=160, bbox_inches="tight")
+    buf.seek(0)
+    st.download_button(
+        "Diagramm als PNG herunterladen",
+        data=buf,
+        file_name=f"schmerzverlauf_{dt.date.today()}.png",
+        mime="image/png"
+    )
+else:
+    st.info("Keine Daten für das Diagramm vorhanden.")
 
 
 
