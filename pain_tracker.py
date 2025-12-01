@@ -242,7 +242,7 @@ with tab3:
     # Filterfeld für beide Tabellen
     filter_name = st.text_input("Filter nach Name (optional)", value="")
 
-    # Medikamentenliste zuerst (Seite 1)
+    # Seite 1: Medikamentenliste
     st.markdown("### Verabreichte Medikamente und den Patientennamen")
     df_med = load_data(DATA_FILE_MED, MED_COLUMNS)
     df_filtered_med = filter_by_name(df_med, filter_name)
@@ -259,11 +259,11 @@ with tab3:
     # Seitenumbruch für PDF-Druck → Schmerzverlauf ab Seite 2
     st.markdown("<div style='page-break-before: always'></div>", unsafe_allow_html=True)
 
-    # Schmerzverlauf-Tabelle (Seite 2)
+    # Seite 2: Schmerzverlauf-Tabelle
     st.markdown("### Gefilterte Tabelle – Schmerzverlauf")
     df_pain = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
     df_filtered_pain = filter_by_name(df_pain, filter_name)
-    st.dataframe(df_filtered_pain, use_container_width=True, height=300)
+    st.dataframe(df_filtered_pain, use_container_width=True, height=280)
 
     csv_pain = df_filtered_pain.to_csv(index=False).encode("utf-8")
     st.download_button(
@@ -273,19 +273,20 @@ with tab3:
         mime="text/csv"
     )
 
-    st.divider()
-
-    # Diagramm ganz unten (Seite 2, kleiner)
+    # Kompaktes Diagramm
     st.markdown("### Diagramm – Schmerzverlauf")
-    chart_png = plot_pain(df_filtered_pain)  # in plot_pain: figsize=(5, 2.5)
+    chart_png = plot_pain(df_filtered_pain)  # in plot_pain: figsize=(4.5, 2.2)
     st.image(chart_png, caption="Liniendiagramm", use_column_width=True)
 
     st.divider()
     st.subheader("Druck-Hinweis")
     st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
-            "Die Tabellen und das Diagramm sind direkt sichtbar.")
+            "Die Medikamentenliste erscheint auf Seite 1, der Schmerzverlauf und das Diagramm auf Seite 2.")
 
     # Rückkehr-Button, falls PDF im selben Tab geöffnet wurde
     if st.button("Zurück zur App"):
         st.rerun()
+
+   
+
 
