@@ -239,7 +239,20 @@ with tab2:
 with tab3:
     st.subheader("Verlauf und Export")
 
-    # Filterfeld für beide Tabellen
+    # Druck-Button
+    st.markdown(
+        """
+        <script>
+        function printPage() {
+            window.print();
+        }
+        </script>
+        <button onclick="printPage()">🖨️ Drucken</button>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Filterfeld
     filter_name = st.text_input("Filter nach Name (optional)", value="")
 
     # Seite 1: Medikamentenliste
@@ -256,10 +269,10 @@ with tab3:
         mime="text/csv"
     )
 
-    # Seitenumbruch für PDF-Druck → Schmerzverlauf ab Seite 2
+    # Seitenumbruch → Seite 2
     st.markdown("<div style='page-break-before: always'></div>", unsafe_allow_html=True)
 
-    # Seite 2: Schmerzverlauf-Tabelle
+    # Seite 2: Schmerzverlauf
     st.markdown("### Gefilterte Tabelle – Schmerzverlauf")
     df_pain = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
     df_filtered_pain = filter_by_name(df_pain, filter_name)
@@ -277,16 +290,4 @@ with tab3:
     st.markdown("### Diagramm – Schmerzverlauf")
     chart_png = plot_pain(df_filtered_pain)  # in plot_pain: figsize=(4.5, 2.2)
     st.image(chart_png, caption="Liniendiagramm", use_column_width=True)
-
-    st.divider()
-    st.subheader("Druck-Hinweis")
-    st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
-            "Die Medikamentenliste erscheint auf Seite 1, der Schmerzverlauf und das Diagramm auf Seite 2.")
-
-    # Rückkehr-Button, falls PDF im selben Tab geöffnet wurde
-    if st.button("Zurück zur App"):
-        st.rerun()
-
-   
-
 
