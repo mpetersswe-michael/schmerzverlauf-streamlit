@@ -25,12 +25,10 @@ def load_data(file, columns):
         df = pd.read_csv(file, sep=";", encoding="utf-8-sig")
     except:
         df = pd.DataFrame(columns=columns)
-    # fehlende Spalten auffüllen und Reihenfolge sichern
     for c in columns:
         if c not in df.columns:
             df[c] = ""
     df = df[columns]
-    # Name als String und sauber
     df["Name"] = df["Name"].fillna("").astype(str)
     return df
 
@@ -70,7 +68,7 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
-# Einfache Authentifizierung
+# Authentifizierung
 # ----------------------------
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
@@ -79,7 +77,7 @@ st.markdown("<h2>Schmerzverlauf</h2>", unsafe_allow_html=True)
 password = st.text_input("Login Passwort", type="password", disabled=st.session_state["auth"])
 
 if not st.session_state["auth"]:
-    if password == "QM1514":  # <- hier dein Passwort einsetzen
+    if password == "QM1514":  # <- Passwort anpassen
         st.session_state["auth"] = True
         st.success("Erfolgreich eingeloggt.")
     else:
@@ -99,17 +97,15 @@ st.markdown("---")
 # Formular-Reset ("Neuer Eintrag")
 # ----------------------------
 if st.button("✏️ Neuer Eintrag"):
-    # Medikamenten-Standardwerte
     st.session_state["med_name"] = ""
     st.session_state["med_date"] = dt.date.today()
+    st.session_state["med_given"] = "Nein"
     st.session_state["med_drug"] = ""
     st.session_state["med_type"] = "Dauermedikation"
-    # Schmerz-Standardwerte
     st.session_state["pain_name"] = ""
     st.session_state["pain_date"] = dt.date.today()
     st.session_state["pain_level"] = 0
     st.session_state["pain_notes"] = ""
-    # Checkbox-Resets (Art, Lokalisation, Begleitsymptome)
     for label in ["Stechend", "Dumpf", "Brennend", "Ziehend"]:
         st.session_state[f"type_{label}"] = False
     for label in ["Kopf", "Rücken", "Bauch", "Bein"]:
@@ -127,23 +123,20 @@ st.markdown("## Medikamenten-Eintrag")
 
 med_name = st.text_input("Name", key="med_name", value=st.session_state.get("med_name", ""))
 med_date = st.date_input("Datum", value=st.session_state.get("med_date", dt.date.today()), key="med_date")
-med_drug = st.text_input("Medikament", key="med_drug", value=st.session_state.get("med_drug", ""))
+
+st.markdown("**Medikament verabreicht?**")
+med_given = st.radio("Auswahl", ["Ja", "Nein"], key="med_given", index=0 if st.session_state.get("med_given") == "Ja" else 1)
+
+if med_given == "Ja":
+    med_drug = st.text_input("Welches Medikament?", key="med_drug", value=st.session_state.get("med_drug", ""))
+else:
+    med_drug = "keines"
+
 med_type = st.selectbox("Typ", ["Dauermedikation", "Bedarfsmedikation"], key="med_type")
 
-med_save = st.markdown("""
-    <style>
-    div.stButton > button:first-child {
-        background-color: #4CAF50;
-        color: white;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 if st.button("💾 Medikament speichern"):
-
     if not med_name.strip():
         st.warning("Bitte einen Namen eingeben.")
-    elif not med_drug.strip():
-        st.warning("Bitte ein Medikament eingeben.")
     else:
         new_med = pd.DataFrame([{
             "Name": med_name.strip(),
@@ -155,7 +148,6 @@ if st.button("💾 Medikament speichern"):
             existing_med = pd.read_csv(DATA_FILE_MED, sep=";", encoding="utf-8-sig")
         except:
             existing_med = pd.DataFrame(columns=MED_COLUMNS)
-        # Spalten sicherstellen
         for c in MED_COLUMNS:
             if c not in existing_med.columns:
                 existing_med[c] = ""
@@ -195,16 +187,7 @@ for label in ["Übelkeit", "Erbrechen"]:
 
 pain_notes = st.text_area("Bemerkungen", key="pain_notes", value=st.session_state.get("pain_notes", ""))
 
-pain_save = st.markdown("""
-    <style>
-    div.stButton > button:last-child {
-        background-color: #2196F3;
-        color: white;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 if st.button("💾 Schmerzverlauf speichern"):
-
     if not pain_name.strip():
         st.warning("Bitte einen Namen eingeben.")
     else:
@@ -214,20 +197,20 @@ if st.button("💾 Schmerzverlauf speichern"):
             "Schmerzstärke": pain_level,
             "Art": ", ".join(pain_types),
             "Lokalisation": ", ".join(pain_locations),
-            "Begleitsymptome": ", ".join(pain_symptoms),
-            "Bemerkung": pain_notes.strip()
-        }])
-        try:
-            existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
-        except:
-            existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
-        for c in PAIN_COLUMNS:
-            if c not in existing_pain.columns:
-                existing_pain[c] = ""
-        existing_pain = existing_pain[PAIN_COLUMNS]
-        updated_pain = pd.concat([existing_pain, new_pain], ignore_index=True)
-        updated_pain.to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
-        st.success("Schmerzverlauf gespeichert.")
+                    "Begleitsymptome": ", ".join(pain_symptoms),
+        "Bemerkung": pain_notes.strip()
+    }])
+    try:
+        existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
+    except:
+        existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
+    for c in PAIN_COLUMNS:
+        if c not in existing_pain.columns:
+            existing_pain[c] = ""
+    existing_pain = existing_pain[PAIN_COLUMNS]
+    updated_pain = pd.concat([existing_pain, new_pain], ignore_index=True)
+    updated_pain.to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
+    st.success("Schmerzverlauf gespeichert.")
 
 st.markdown("---")
 
