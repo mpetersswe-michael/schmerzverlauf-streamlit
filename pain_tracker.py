@@ -13,7 +13,7 @@ DATA_FILE_MED = "med_data.csv"
 VALID_PASSWORD = "QM1514"
 SESSION_KEY_AUTH = "is_authenticated"
 
-PAIN_COLUMNS = ["Name", "Datum", "Intensität", "Bemerkung", "Situation"]
+PAIN_COLUMNS = ["Name", "Datum", "Intensität", "Körperregion", "Bemerkung", "Situation"]
 MED_COLUMNS = ["Name", "Datum", "Medikament", "Dosierung", "Art"]
 
 PAIN_SITUATIONS = ["Vor Einnahme", "Nach Einnahme", "Stabil", "Instabil"]
@@ -133,6 +133,7 @@ with tab1:
         with col3:
             intensity = st.slider("Intensität (0–10)", min_value=0, max_value=10, value=5)
 
+        region = st.text_input("Körperregion", placeholder="z. B. Kopf, Rücken, Bein")
         situation = st.radio("Situation", PAIN_SITUATIONS, horizontal=True)
         note = st.text_area("Bemerkung (optional)", height=80)
         submit = st.form_submit_button("Speichern (append-only)")
@@ -145,6 +146,7 @@ with tab1:
                     "Name": name.strip(),
                     "Datum": date_val,
                     "Intensität": intensity,
+                    "Körperregion": region.strip(),
                     "Bemerkung": note.strip(),
                     "Situation": situation
                 }
@@ -168,7 +170,8 @@ with tab2:
 
         med = st.text_input("Medikament")
         dose = st.text_input("Dosierung")
-        med_type = st.radio("Art", MED_TYPES, horizontal=True)
+        med_types_selected = st.multiselect("Art", options=MED_TYPES)
+
         submit = st.form_submit_button("Speichern (append-only)")
 
         if submit:
@@ -180,7 +183,7 @@ with tab2:
                     "Datum": date_val,
                     "Medikament": med.strip(),
                     "Dosierung": dose.strip(),
-                    "Art": med_type
+                    "Art": ", ".join(med_types_selected)
                 }
                 df_med = append_row(df_med, new_row)
                 save_data(df_med, DATA_FILE_MED)
@@ -218,6 +221,8 @@ with tab3:
     st.subheader("Druck-Hinweis")
     st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
             "Die Tabelle und das Diagramm sind direkt sichtbar.")
+
+
 
 
 
