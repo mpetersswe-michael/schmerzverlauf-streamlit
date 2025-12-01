@@ -1,256 +1,89 @@
-import io
-import os
-import datetime as dt
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import datetime as dt
 
 # ----------------------------
 # Konfiguration
 # ----------------------------
-DATA_FILE_PAIN = "pain_data.csv"
-DATA_FILE_MED = "med_data.csv"
-VALID_PASSWORD = "QM1514"
-SESSION_KEY_AUTH = "is_authenticated"
+st.set_page_config(page_title="Schmerzverlauf", layout="wide")
 
-# Tab 1: Schmerz-Eintrag – vollständiges Feldset
-PAIN_COLUMNS = [
-    "Name",
-    "Datum",
-    "Intensität",
-    "Körperregion",
-    "Schmerzempfinden",
-    "Begleitsymptome",
-    "Tageszeit",
-    "Schmerzeintritt",
-    "Schmerzsituation",
-    "Bemerkung"
-]
+DATA_FILE_MED = "medications.csv"
+DATA_FILE_PAIN = "pain_tracking.csv"
 
-# Tab 2/3: Medikamente – mit Patientennamen
-MED_COLUMNS = ["Name", "Datum", "Medikament", "Dosierung", "Art"]
-
-# Auswahllisten
-SCHMERZEMPFINDEN_OPTS = ["brennend", "dumpf", "stechend", "ziehend", "pochend"]
-BEGLEITSYMPTOME_OPTS = ["Übelkeit", "Schwindel", "Müdigkeit", "Fieber", "Erbrechen"]
-TAGESZEIT_OPTS = ["morgens", "mittags", "abends", "nachts"]
-MED_TYPES = ["Bedarfsmedikation", "Dauermedikation"]
+MED_COLUMNS = ["Name", "Datum", "Medikament"]
+PAIN_COLUMNS = ["Name", "Datum", "Schmerzstärke"]
 
 # ----------------------------
-# Login / Logout
+# Hilfsfunktionen
 # ----------------------------
-def login_form():
-    st.subheader("Login")
-    with st.form("login_form"):
-        password = st.text_input("Passwort", type="password")
-        submit = st.form_submit_button("Einloggen")
-        if submit:
-            if password == VALID_PASSWORD:
-                st.session_state[SESSION_KEY_AUTH] = True
-                st.success("Erfolgreich eingeloggt.")
-                st.rerun()
-            else:
-                st.error("Ungültiges Passwort.")
-
-def sidebar_logout():
-    with st.sidebar:
-        st.markdown("### Navigation")
-        if st.session_state.get(SESSION_KEY_AUTH, False):
-            if st.button("Logout"):
-                st.session_state[SESSION_KEY_AUTH] = False
-                st.success("Abgemeldet.")
-                st.rerun()
-
-# ----------------------------
-# Datenfunktionen
-# ----------------------------
-def load_data(path, columns):
-    if os.path.exists(path):
-        df = pd.read_csv(path, encoding="utf-8")
-        for col in columns:
-            if col not in df.columns:
-                df[col] = ""
-        try:
-            df["Datum"] = pd.to_datetime(df["Datum"]).dt.date
-        except Exception:
-            pass
+def load_data(file, columns):
+    try:
+        df = pd.read_csv(file)
         return df[columns]
-    else:
+    except Exception:
         return pd.DataFrame(columns=columns)
 
-def save_data(df, path):
-    df.to_csv(path, index=False, encoding="utf-8")
+def filter_by_name(df, name):
+    if name:
+        return df[df["Name"].str.contains(name, case=False, na=False)]
+    return df
 
-def append_row(df, row_dict):
-    return pd.concat([df, pd.DataFrame([row_dict])], ignore_index=True)
-
-def filter_by_name(df, name_filter):
-    if "Name" not in df.columns:
-        return df.copy()
-    if not name_filter:
-        return df.copy()
-    return df[df["Name"].str.contains(name_filter, case=False, na=False)].copy()
-
-def plot_pain(df_filtered):
-    buf = io.BytesIO()
-    if df_filtered.empty or "Intensität" not in df_filtered.columns:
-        fig, ax = plt.subplots(figsize=(5, 2.5))
-        ax.text(0.5, 0.5, "Keine Daten für Diagramm", ha="center", va="center")
-        ax.axis("off")
-    else:
-        dfp = df_filtered.copy()
-        try:
-            dfp["Datum"] = pd.to_datetime(dfp["Datum"])
-        except Exception:
-            pass
-        dfp = dfp.sort_values("Datum")
-        fig, ax = plt.subplots(figsize=(5, 2.5))  # kleineres Diagramm
-        ax.plot(dfp["Datum"], dfp["Intensität"], marker="o", linewidth=2, color="#1f77b4")
-        ax.set_title("Schmerzverlauf")
-        ax.set_xlabel("Datum")
-        ax.set_ylabel("Intensität (0–10)")
-        ax.set_ylim(0, 10)
-        ax.grid(True, linestyle="--", alpha=0.4)
+def plot_pain(df):
+    if df.empty:
+        return None
+    fig, ax = plt.subplots(figsize=(6, 3))  # größer, klare Schrift
+    ax.plot(df["Datum"], df["Schmerzstärke"], marker="o", color="steelblue")
+    ax.set_xlabel("Datum", fontsize=10, fontweight="normal")
+    ax.set_ylabel("Schmerzstärke", fontsize=10, fontweight="normal")
+    ax.set_title("Schmerzverlauf", fontsize=12, fontweight="normal")
+    ax.grid(True, linestyle="--", alpha=0.6)
     fig.tight_layout()
-    fig.savefig(buf, format="png", dpi=150)
-    buf.seek(0)
-    plt.close(fig)
-    return buf
+    return fig
 
 # ----------------------------
-# UI Start
+# Login
 # ----------------------------
-st.set_page_config(page_title="Pain Tracking", layout="wide")
-st.title("Pain Tracking – Login, Erfassung, Verlauf")
+st.title("Schmerzverlauf")
 
-if not st.session_state.get(SESSION_KEY_AUTH, False):
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        login_form()
+password = st.text_input("Login Passwort", type="password")
+if password != "geheim":   # Beispiel-Passwort
+    st.warning("Bitte Passwort eingeben")
     st.stop()
-
-sidebar_logout()
 
 # ----------------------------
 # Tabs
 # ----------------------------
-tab1, tab2, tab3 = st.tabs(["📋 Eintrag", "💊 Medikamente", "📈 Verlauf"])
+tab1, tab2, tab3 = st.tabs(["Eintrag", "Medikamente", "Verlauf"])
 
 # ----------------------------
-# Tab 1: Schmerz-Eintrag
+# Tab 1: Eintrag
 # ----------------------------
 with tab1:
-    st.subheader("Neuer Schmerz-Eintrag")
-    df_pain = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
-
-    with st.form("pain_form"):
-        col1, col2, col3 = st.columns([2, 1, 1])
-        with col1:
-            name = st.text_input("Name", value="", placeholder="Patientenname")
-        with col2:
-            date_val = st.date_input("Datum", value=dt.date.today())
-        with col3:
-            intensity = st.slider("Intensität (0–10)", min_value=0, max_value=10, value=5)
-
-        region = st.text_input("Körperregion", placeholder="z. B. Kopf, Rücken, Bein")
-
-        pain_feel = st.multiselect("Schmerzempfinden", options=SCHMERZEMPFINDEN_OPTS)
-        symptoms = st.multiselect("Begleitsymptome", options=BEGLEITSYMPTOME_OPTS)
-
-        time_of_day = st.selectbox("Tageszeit", options=TAGESZEIT_OPTS, index=0)
-
-        st.markdown("**Schmerzeintritt**")
-        entry_before = st.checkbox("Schmerzeintritt vor Einnahme eines Medikamentes")
-        entry_after = st.checkbox("Schmerzeintritt nach Einnahme eines Medikamentes")
-
-        st.markdown("**Schmerzsituation**")
-        situation_stable = st.checkbox("Schmerzsituation ist stabil")
-        situation_unstable = st.checkbox("Schmerzsituation ist instabil")
-
-        note = st.text_area("Bemerkung (optional)", height=80)
-
-        submit = st.form_submit_button("Speichern (append-only)")
-
-        if submit:
-            if not name.strip():
-                st.error("Name ist erforderlich.")
-            else:
-                entry_list = []
-                if entry_before:
-                    entry_list.append("vor Einnahme eines Medikamentes")
-                if entry_after:
-                    entry_list.append("nach Einnahme eines Medikamentes")
-                situation_list = []
-                if situation_stable:
-                    situation_list.append("stabil")
-                if situation_unstable:
-                    situation_list.append("instabil")
-
-                new_row = {
-                    "Name": name.strip(),
-                    "Datum": date_val,
-                    "Intensität": intensity,
-                    "Körperregion": region.strip(),
-                    "Schmerzempfinden": ", ".join(pain_feel),
-                    "Begleitsymptome": ", ".join(symptoms),
-                    "Tageszeit": time_of_day,
-                    "Schmerzeintritt": ", ".join(entry_list),
-                    "Schmerzsituation": ", ".join(situation_list),
-                    "Bemerkung": note.strip(),
-                }
-                df_pain = append_row(df_pain, new_row)
-                save_data(df_pain, DATA_FILE_PAIN)
-                st.success("Eintrag gespeichert ✅")
+    st.subheader("Neuen Eintrag hinzufügen")
+    st.info("Hier könnten Eingabefelder für neue Daten stehen.")
 
 # ----------------------------
-# Tab 2: Medikamenten-Eintrag
+# Tab 2: Medikamente
 # ----------------------------
 with tab2:
-    st.subheader("Medikamenten-Eintrag")
-    df_med = load_data(DATA_FILE_MED, MED_COLUMNS)
+    st.subheader("Medikamentenliste")
 
-    with st.form("med_form"):
-        name = st.text_input("Name", value="", placeholder="Patientenname")
-        date_val = st.date_input("Datum", value=dt.date.today())
-        med = st.text_input("Medikament")
-        dose = st.text_input("Dosierung")
-        med_types_selected = st.multiselect("Art", options=MED_TYPES)
-
-        submit = st.form_submit_button("Speichern (append-only)")
-
-        if submit:
-            if not med.strip() or not name.strip():
-                st.error("Name und Medikament sind erforderlich.")
-            else:
-                new_row = {
-                    "Name": name.strip(),
-                    "Datum": date_val,
-                    "Medikament": med.strip(),
-                    "Dosierung": dose.strip(),
-                    "Art": ", ".join(med_types_selected)
-                }
-                df_med = append_row(df_med, new_row)
-                save_data(df_med, DATA_FILE_MED)
-                st.success("Eintrag gespeichert ✅")
-
-# ----------------------------
-# Tab 3: Verlauf / Export
-# ----------------------------
-with tab3:
-    st.subheader("Verlauf und Export")
-
-    # Filterfeld
     filter_name = st.text_input("Filter nach Name (optional)", value="")
 
-    # Medikamentenliste (Export)
-    st.markdown("### Verabreichte Medikamente und den Patientennamen")
     df_med = load_data(DATA_FILE_MED, MED_COLUMNS)
     df_filtered_med = filter_by_name(df_med, filter_name)
 
-    # Anzeige
-    st.dataframe(df_filtered_med, use_container_width=True, height=240)
+    # Überschrift mit Patientennamen
+    if filter_name:
+        st.markdown(f"### Medikamentenliste für Patient: {filter_name}")
+    else:
+        st.markdown("### Medikamentenliste")
 
-    # CSV-Export mit korrekter Spaltenreihenfolge
+    # Tabelle mit hoher Header-Zeile
+    st.dataframe(df_filtered_med, use_container_width=True, height=300)
+
+    # CSV-Export
     csv_med = df_filtered_med[MED_COLUMNS].to_csv(index=False, encoding="utf-8")
     st.download_button(
         "CSV Medikamente herunterladen",
@@ -259,17 +92,20 @@ with tab3:
         mime="text/csv"
     )
 
-    st.divider()
+# ----------------------------
+# Tab 3: Verlauf
+# ----------------------------
+with tab3:
+    st.subheader("Schmerzverlauf")
 
-    # Schmerzverlauf (Export)
-    st.markdown("### Gefilterte Tabelle – Schmerzverlauf")
+    filter_name = st.text_input("Filter nach Name (optional)", value="", key="pain_filter")
+
     df_pain = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
     df_filtered_pain = filter_by_name(df_pain, filter_name)
 
-    # Anzeige
-    st.dataframe(df_filtered_pain, use_container_width=True, height=280)
+    st.dataframe(df_filtered_pain, use_container_width=True, height=400)
 
-    # CSV-Export mit korrekter Spaltenreihenfolge
+    # CSV-Export
     csv_pain = df_filtered_pain[PAIN_COLUMNS].to_csv(index=False, encoding="utf-8")
     st.download_button(
         "CSV Schmerzverlauf herunterladen",
@@ -277,6 +113,13 @@ with tab3:
         file_name=f"pain_tracking_{dt.date.today()}.csv",
         mime="text/csv"
     )
+
+    # Diagramm größer, klare Schrift
+    chart_fig = plot_pain(df_filtered_pain)
+    if chart_fig:
+        st.pyplot(chart_fig)
+
+
 
 
 
