@@ -192,7 +192,7 @@ st.markdown("## Daten anzeigen und exportieren")
 df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
 df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
 
-# Filterfeld
+# Gemeinsames Filterfeld für beide Tabellen
 filter_name = st.text_input("Filter nach Name (exakt)", value="", key="filter_all")
 
 # Medikamente
@@ -235,40 +235,6 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
-
-
-# Schmerzverlauf
-st.markdown("### Schmerzverlauf")
-df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
-df_filtered_pain = filter_by_name_exact(df_pain_all, filter_name)
-st.dataframe(df_filtered_pain, use_container_width=True, height=300)
-csv_pain = to_csv_semicolon(df_filtered_pain)
-st.download_button(
-    "CSV Schmerzverlauf herunterladen",
-    data=csv_pain,
-    file_name=f"pain_tracking_{dt.date.today()}.csv",
-    mime="text/csv"
-)
-# ----------------------------
-# Diagramm ganz am Ende + Download
-# ----------------------------
-st.markdown("### Diagramm")
-chart_fig = plot_pain(df_filtered_pain)
-
-if chart_fig:
-    st.pyplot(chart_fig)
-    buf = BytesIO()
-    chart_fig.savefig(buf, format="png", dpi=160, bbox_inches="tight")
-    buf.seek(0)
-    st.download_button(
-        "Diagramm als PNG herunterladen",
-        data=buf,
-        file_name=f"schmerzverlauf_{dt.date.today()}.png",
-        mime="image/png"
-    )
-else:
-    st.info("Keine Daten für das Diagramm vorhanden.")
-
 
 
 
