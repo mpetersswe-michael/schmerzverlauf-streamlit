@@ -114,7 +114,47 @@ tab1, tab2, tab3 = st.tabs(["Eintrag", "Medikamente", "Verlauf"])
 # ----------------------------
 with tab1:
     st.subheader("Neuen Eintrag hinzufügen")
-    st.info("Hier können später Eingabefelder für neue Daten stehen.")
+
+    st.markdown("### Medikamenten-Eintrag")
+    med_name = st.text_input("Name", key="med_name")
+    med_date = st.date_input("Datum", value=dt.date.today(), key="med_date")
+    med_drug = st.text_input("Medikament", key="med_drug")
+
+    if st.button("Medikament speichern"):
+        new_med = pd.DataFrame([{
+            "Name": med_name,
+            "Datum": med_date.strftime("%Y-%m-%d"),
+            "Medikament": med_drug
+        }])
+        try:
+            existing_med = pd.read_csv(DATA_FILE_MED, sep=";", encoding="utf-8-sig")
+        except:
+            existing_med = pd.DataFrame(columns=MED_COLUMNS)
+        updated_med = pd.concat([existing_med, new_med], ignore_index=True)
+        updated_med.to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
+        st.success("Medikament gespeichert.")
+
+    st.divider()
+
+    st.markdown("### Schmerzverlauf-Eintrag")
+    pain_name = st.text_input("Name", key="pain_name")
+    pain_date = st.date_input("Datum", value=dt.date.today(), key="pain_date")
+    pain_level = st.slider("Schmerzstärke (0–10)", min_value=0, max_value=10, key="pain_level")
+
+    if st.button("Schmerzverlauf speichern"):
+        new_pain = pd.DataFrame([{
+            "Name": pain_name,
+            "Datum": pain_date.strftime("%Y-%m-%d"),
+            "Schmerzstärke": pain_level
+        }])
+        try:
+            existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
+        except:
+            existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
+        updated_pain = pd.concat([existing_pain, new_pain], ignore_index=True)
+        updated_pain.to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
+        st.success("Schmerzverlauf gespeichert.")
+
 
 # ----------------------------
 # Tab 2: Medikamente
@@ -172,6 +212,7 @@ with tab3:
         st.pyplot(chart_fig)
     else:
         st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
