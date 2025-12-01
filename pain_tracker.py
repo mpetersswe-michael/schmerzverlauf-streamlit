@@ -6,23 +6,28 @@ import matplotlib.dates as mdates
 import datetime as dt
 from io import BytesIO
 
+# ----------------------------
+# Button-Styles
+# ----------------------------
 st.markdown("""
     <style>
-    div.stButton > button:nth-child(1) {
-        background-color: #4CAF50; /* Grün */
+    /* Medikament speichern -> grün */
+    div.stButton > button:nth-of-type(1) {
+        background-color: #4CAF50;
         color: white;
     }
-    div.stButton > button:nth-child(2) {
-        background-color: #2196F3; /* Blau */
+    /* Schmerzverlauf speichern -> blau */
+    div.stButton > button:nth-of-type(2) {
+        background-color: #2196F3;
         color: white;
     }
-    div.stButton > button:nth-child(3) {
-        background-color: #f44336; /* Rot */
+    /* Daten löschen -> rot */
+    div.stButton > button:nth-of-type(3) {
+        background-color: #f44336;
         color: white;
     }
     </style>
     """, unsafe_allow_html=True)
-
 
 # ----------------------------
 # Grundkonfiguration
@@ -91,7 +96,7 @@ def plot_pain(df):
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
 
-st.markdown("<h2>Schmerzverlauf</h2>", unsafe_allow_html=True)
+st.markdown("# 📈 Schmerzverlauf")  # Icon zurück auf Startseite
 password = st.text_input("Login Passwort", type="password", disabled=st.session_state["auth"])
 
 if not st.session_state["auth"]:
@@ -152,7 +157,7 @@ else:
 
 med_type = st.selectbox("Typ", ["Dauermedikation", "Bedarfsmedikation"], key="med_type")
 
-if st.button("💾 Medikament speichern", key="med_save"):
+if st.button("💾 Medikament speichern"):
     if not med_name.strip():
         st.warning("Bitte einen Namen eingeben.")
     else:
@@ -205,11 +210,11 @@ for label in ["Übelkeit", "Erbrechen"]:
 
 pain_notes = st.text_area("Bemerkungen", key="pain_notes", value=st.session_state.get("pain_notes", ""))
 
-if st.button("💾 Schmerzverlauf speichern", key="pain_save"):
+if st.button("💾 Schmerzverlauf speichern"):
     if not pain_name.strip():
         st.warning("Bitte einen Namen eingeben.")
     else:
-        new_pain = pd.DataFrame([{
+                new_pain = pd.DataFrame([{
             "Name": pain_name.strip(),
             "Datum": pain_date.strftime("%Y-%m-%d"),
             "Schmerzstärke": pain_level,
@@ -237,7 +242,7 @@ st.markdown("---")
 # ----------------------------
 st.markdown("## Datenverwaltung")
 delete_pw = st.text_input("Passwort für Daten löschen", type="password", key="delete_pw")
-if st.button("🗑️ Daten löschen", key="delete_data"):
+if st.button("🗑️ Daten löschen"):
     if delete_pw == "loeschen":  # <- eigenes Passwort für Löschfunktion
         pd.DataFrame(columns=MED_COLUMNS).to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
         pd.DataFrame(columns=PAIN_COLUMNS).to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
@@ -312,6 +317,8 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
+
 
 
 
