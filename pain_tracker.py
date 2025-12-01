@@ -21,7 +21,6 @@ PAIN_COLUMNS = ["Name", "Datum", "Schmerzstärke", "Art", "Lokalisation", "Begle
 # Hilfsfunktionen
 # ----------------------------
 def load_data(file, columns):
-    """CSV laden; fehlende Spalten ergänzen; robuste Rückgabe."""
     try:
         df = pd.read_csv(file, sep=";", encoding="utf-8-sig")
     except:
@@ -34,7 +33,6 @@ def load_data(file, columns):
     return df
 
 def filter_by_name_exact(df, name):
-    """Exakter Namensfilter (trim + lowercase)."""
     base = df.copy()
     base["Name_clean"] = base["Name"].str.strip().str.lower()
     if name and name.strip():
@@ -44,11 +42,9 @@ def filter_by_name_exact(df, name):
     return base
 
 def to_csv_semicolon(df):
-    """CSV mit Semikolon als Separator und UTF-8-SIG-Encoding."""
     return df.to_csv(index=False, sep=";", encoding="utf-8-sig").encode("utf-8-sig")
 
 def plot_pain(df):
-    """Liniendiagramm für Schmerzverlauf mit deutschem Datumsformat."""
     if df.empty:
         return None
     dfx = df.copy()
@@ -58,7 +54,7 @@ def plot_pain(df):
     if dfx.empty:
         return None
     patient_name = dfx["Name"].dropna().unique()
-    name_text = patient_name[0].strip() if len(patient_name) > 0 and isinstance(patient_name[0], str) and patient_name[0].strip() else "Unbekannt"
+    name_text = patient_name[0].strip() if len(patient_name) > 0 else "Unbekannt"
     fig, ax = plt.subplots(figsize=(5.5, 2.8))
     ax.plot(dfx["Datum"], dfx["Schmerzstärke"], color="#b00020", linewidth=2.0, marker="o", markersize=4)
     ax.set_xlabel("Datum", fontsize=11)
@@ -81,7 +77,7 @@ st.markdown("<h2>Schmerzverlauf</h2>", unsafe_allow_html=True)
 password = st.text_input("Login Passwort", type="password", disabled=st.session_state["auth"])
 
 if not st.session_state["auth"]:
-    if password == "geheim":
+    if password == "QM1514":   # <- hier dein Passwort einsetzen
         st.session_state["auth"] = True
         st.success("Erfolgreich eingeloggt.")
     else:
@@ -98,91 +94,6 @@ with st.sidebar:
 st.markdown("---")
 
 # ----------------------------
-# Formular-Reset ("Neuer Eintrag")
-# ----------------------------
-if st.button("✏️ Neuer Eintrag"):
-    for key in ["med_name", "med_drug", "pain_name", "pain_notes"]:
-        st.session_state[key] = ""
-    st.session_state["med_type"] = "Dauermedikation"
-    st.session_state["med_date"] = dt.date.today()
-    st.session_state["pain_date"] = dt.date.today()
-    st.session_state["pain_level"] = 0
-    for label in ["Stechend", "Dumpf", "Brennend", "Ziehend", "Kopf", "Rücken", "Bauch", "Bein", "Übelkeit", "Erbrechen"]:
-        for prefix in ["type_", "loc_", "sym_"]:
-            k = f"{prefix}{label}"
-            if k in st.session_state:
-                st.session_state[k] = False
-
-# ----------------------------
-# Medikamenten-Eingabe
-# ----------------------------
-st.markdown("## Medikamenten-Eintrag")
-med_name = st.text_input("Name", key="med_name")
-med_date = st.date_input("Datum", value=st.session_state.get("med_date", dt.date.today()), key="med_date")
-med_drug = st.text_input("Medikament", key="med_drug")
-med_type = st.selectbox("Typ", ["Dauermedikation", "Bedarfsmedikation"], key="med_type")
-
-if st.button("Medikament speichern"):
-    if not med_name.strip():
-        st.warning("Bitte einen Namen eingeben.")
-    elif not med_drug.strip():
-        st.warning("Bitte ein Medikament eingeben.")
-    else:
-        new_med = pd.DataFrame([{
-            "Name": med_name.strip(),
-            "Datum": med_date.strftime("%Y-%m-%d"),
-            "Medikament": med_drug.strip(),
-            "Typ": med_type
-        }])
-        try:
-            existing_med = pd.read_csv(DATA_FILE_MED, sep=";", encoding="utf-8-sig")
-        except:
-            existing_med = pd.DataFrame(columns=MED_COLUMNS)
-        updated_med = pd.concat([existing_med, new_med], ignore_index=True)
-        updated_med.to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
-        st.success("Medikament gespeichert.")
-
-# ----------------------------
-# Schmerzverlauf-Eingabe
-# ----------------------------
-st.markdown("## Schmerzverlauf-Eintrag")
-pain_name = st.text_input("Name", key="pain_name")
-pain_date = st.date_input("Datum", value=st.session_state.get("pain_date", dt.date.today()), key="pain_date")
-pain_level = st.slider("Schmerzstärke (NRS 0–10)", min_value=0, max_value=10, step=1, key="pain_level")
-
-st.markdown("**Art**")
-pain_types = [label for label in ["Stechend", "Dumpf", "Brennend", "Ziehend"] if st.checkbox(label, key=f"type_{label}")]
-
-st.markdown("**Lokalisation**")
-pain_locations = [label for label in ["Kopf", "Rücken", "Bauch", "Bein"] if st.checkbox(label, key=f"loc_{label}")]
-
-st.markdown("**Begleitsymptome**")
-pain_symptoms = [label for label in ["Übelkeit", "Erbrechen"] if st.checkbox(label, key=f"sym_{label}")]
-
-pain_notes = st.text_area("Bemerkungen", key="pain_notes")
-
-if st.button("Schmerzverlauf speichern"):
-    if not pain_name.strip():
-        st.warning("Bitte einen Namen eingeben.")
-    else:
-        new_pain = pd.DataFrame([{
-            "Name": pain_name.strip(),
-            "Datum": pain_date.strftime("%Y-%m-%d"),
-            "Schmerzstärke": pain_level,
-            "Art": ", ".join(pain_types),
-            "Lokalisation": ", ".join(pain_locations),
-            "Begleitsymptome": ", ".join(pain_symptoms),
-            "Bemerkung": pain_notes.strip()
-        }])
-        try:
-            existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
-        except:
-            existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
-        updated_pain = pd.concat([existing_pain, new_pain], ignore_index=True)
-        updated_pain.to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
-        st.success("Schmerzverlauf gespeichert.")
-
-# ----------------------------
 # Daten anzeigen und exportieren
 # ----------------------------
 st.markdown("## Daten anzeigen und exportieren")
@@ -191,9 +102,21 @@ st.markdown("## Daten anzeigen und exportieren")
 df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
 df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
 
-# Getrennte Filterfelder
-filter_name_med = st.text_input("Filter nach Name (Medikamente, exakt)", value="", key="filter_med")
-filter_name_pain = st.text_input("Filter nach Name (Schmerzverlauf, exakt)", value="", key="filter_pain")
+# Dropdown-Filter für Medikamente
+filter_name_med = st.selectbox(
+    "Filter nach Name (Medikamente)",
+    options=[""] + sorted(df_med_all["Name"].dropna().str.strip().unique()),
+    index=0,
+    key="filter_med"
+)
+
+# Dropdown-Filter für Schmerzverlauf
+filter_name_pain = st.selectbox(
+    "Filter nach Name (Schmerzverlauf)",
+    options=[""] + sorted(df_pain_all["Name"].dropna().str.strip().unique()),
+    index=0,
+    key="filter_pain"
+)
 
 # Medikamente
 st.markdown("### Medikamente")
@@ -219,7 +142,7 @@ st.download_button(
     mime="text/csv"
 )
 
-# Diagramm (nutzt den Schmerzverlauf-Filter)
+# Diagramm
 st.markdown("### Diagramm")
 chart_fig = plot_pain(df_filtered_pain)
 if chart_fig:
@@ -235,6 +158,8 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
+
 
 
 
