@@ -27,7 +27,7 @@ PAIN_COLUMNS = [
     "Bemerkung"
 ]
 
-# Tab 2: Medikamente – reduziertes Feldset
+# Tab 2/3: Medikamente – mit Patientennamen
 MED_COLUMNS = ["Name", "Datum", "Medikament", "Dosierung", "Art"]
 
 # Auswahllisten
@@ -94,7 +94,7 @@ def filter_by_name(df, name_filter):
 def plot_pain(df_filtered):
     buf = io.BytesIO()
     if df_filtered.empty or "Intensität" not in df_filtered.columns:
-        fig, ax = plt.subplots(figsize=(7, 3))
+        fig, ax = plt.subplots(figsize=(5, 2.5))
         ax.text(0.5, 0.5, "Keine Daten für Diagramm", ha="center", va="center")
         ax.axis("off")
     else:
@@ -104,7 +104,7 @@ def plot_pain(df_filtered):
         except Exception:
             pass
         dfp = dfp.sort_values("Datum")
-        fig, ax = plt.subplots(figsize=(7, 3.5))
+        fig, ax = plt.subplots(figsize=(5, 2.5))  # kleineres Diagramm
         ax.plot(dfp["Datum"], dfp["Intensität"], marker="o", linewidth=2, color="#1f77b4")
         ax.set_title("Schmerzverlauf")
         ax.set_xlabel("Datum")
@@ -137,7 +137,7 @@ sidebar_logout()
 tab1, tab2, tab3 = st.tabs(["📋 Eintrag", "💊 Medikamente", "📈 Verlauf"])
 
 # ----------------------------
-# Tab 1: Schmerz-Eintrag (mit Körperregion, Schmerzempfinden, Begleitsymptome, Tageszeit, Schmerzeintritt, Schmerzsituation)
+# Tab 1: Schmerz-Eintrag
 # ----------------------------
 with tab1:
     st.subheader("Neuer Schmerz-Eintrag")
@@ -203,90 +203,19 @@ with tab1:
                 st.success("Eintrag gespeichert ✅")
 
 # ----------------------------
-# Tab 2: Medikamenten-Eintrag (ohne Patientenname, Art mit Mehrfachauswahl)
+# Tab 2: Medikamenten-Eintrag
 # ----------------------------
 with tab2:
     st.subheader("Medikamenten-Eintrag")
     df_med = load_data(DATA_FILE_MED, MED_COLUMNS)
 
     with st.form("med_form"):
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            name = st.text_input("Name", value="", placeholder="Patientenname")
-        with col2:
-            date_val = st.date_input("Datum", value=dt.date.today())
-
+        name = st.text_input("Name", value="", placeholder="Patientenname")
+        date_val = st.date_input("Datum", value=dt.date.today())
         med = st.text_input("Medikament")
         dose = st.text_input("Dosierung")
-        med_types_selected = st.multiselect("Art", options=MED_TYPES)
+        med_types_selected = st.multiselect("Art",
 
-        submit = st.form_submit_button("Speichern (append-only)")
-
-        if submit:
-            if not med.strip() or not name.strip():
-                st.error("Name und Medikament sind erforderlich.")
-            else:
-                new_row = {
-                    "Name": name.strip(),
-                    "Datum": date_val,
-                    "Medikament": med.strip(),
-                    "Dosierung": dose.strip(),
-                    "Art": ", ".join(med_types_selected)
-                }
-                df_med = append_row(df_med, new_row)
-                save_data(df_med, DATA_FILE_MED)
-                st.success("Eintrag gespeichert ✅")
-
-# ----------------------------
-# Tab 3: Verlauf / Export – Medikamente oben, Schmerzverlauf mittig, Diagramm unten
-# ----------------------------
-with tab3:
-    st.subheader("Verlauf und Export")
-
-    # Filterfeld für beide Tabellen
-    filter_name = st.text_input("Filter nach Name (optional)", value="")
-
-    # Medikamentenliste zuerst
-    st.markdown("### Verabreichte Medikamente und den Patientennamen")
-    df_med = load_data(DATA_FILE_MED, MED_COLUMNS)
-    df_filtered_med = filter_by_name(df_med, filter_name)
-    st.dataframe(df_filtered_med, use_container_width=True, height=240)
-
-    csv_med = df_filtered_med.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "CSV Medikamente herunterladen",
-        data=csv_med,
-        file_name=f"medications_{dt.date.today()}.csv",
-        mime="text/csv"
-    )
-
-    st.divider()
-
-    # Schmerzverlauf-Tabelle
-    st.markdown("### Gefilterte Tabelle – Schmerzverlauf")
-    df_pain = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
-    df_filtered_pain = filter_by_name(df_pain, filter_name)
-    st.dataframe(df_filtered_pain, use_container_width=True, height=300)
-
-    csv_pain = df_filtered_pain.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "CSV Schmerzverlauf herunterladen",
-        data=csv_pain,
-        file_name=f"pain_tracking_{dt.date.today()}.csv",
-        mime="text/csv"
-    )
-
-    st.divider()
-
-    # Diagramm ganz unten
-    st.markdown("### Diagramm – Schmerzverlauf")
-    chart_png = plot_pain(df_filtered_pain)
-    st.image(chart_png, caption="Liniendiagramm", use_column_width=True)
-
-    st.divider()
-    st.subheader("Druck-Hinweis")
-    st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
-            "Die Tabellen und das Diagramm sind direkt sichtbar.")
 
 
 
