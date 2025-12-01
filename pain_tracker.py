@@ -11,20 +11,17 @@ from io import BytesIO
 # ----------------------------
 st.markdown("""
     <style>
-    /* Medikament speichern -> grün */
-    div.stButton > button#med_save {
-        background-color: #4CAF50;
-        color: white;
+    button[data-testid="med_save"] {
+        background-color: #4CAF50 !important;
+        color: white !important;
     }
-    /* Schmerzverlauf speichern -> blau */
-    div.stButton > button#pain_save {
-        background-color: #2196F3;
-        color: white;
+    button[data-testid="pain_save"] {
+        background-color: #2196F3 !important;
+        color: white !important;
     }
-    /* Daten löschen -> rot */
-    div.stButton > button#delete_data {
-        background-color: #f44336;
-        color: white;
+    button[data-testid="delete_data"] {
+        background-color: #f44336 !important;
+        color: white !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -100,7 +97,7 @@ st.markdown("<h2>Schmerzverlauf</h2>", unsafe_allow_html=True)
 password = st.text_input("Login Passwort", type="password", disabled=st.session_state["auth"])
 
 if not st.session_state["auth"]:
-    if password == "QM1514":  # <- Passwort anpassen
+    if password == "geheim":
         st.session_state["auth"] = True
         st.success("Erfolgreich eingeloggt.")
     else:
@@ -117,7 +114,7 @@ with st.sidebar:
 st.markdown("---")
 
 # ----------------------------
-# Formular-Reset ("Neuer Eintrag")
+# Formular-Reset
 # ----------------------------
 if st.button("✏️ Neuer Eintrag"):
     st.session_state["med_name"] = ""
@@ -211,7 +208,6 @@ for label in ["Übelkeit", "Erbrechen"]:
 pain_notes = st.text_area("Bemerkungen", key="pain_notes", value=st.session_state.get("pain_notes", ""))
 
 if st.button("💾 Schmerzverlauf speichern", key="pain_save"):
-   
     if not pain_name.strip():
         st.warning("Bitte einen Namen eingeben.")
     else:
@@ -221,20 +217,20 @@ if st.button("💾 Schmerzverlauf speichern", key="pain_save"):
             "Schmerzstärke": pain_level,
             "Art": ", ".join(pain_types),
             "Lokalisation": ", ".join(pain_locations),
-                    "Begleitsymptome": ", ".join(pain_symptoms),
-        "Bemerkung": pain_notes.strip()
-    }])
-    try:
-        existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
-    except:
-        existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
-    for c in PAIN_COLUMNS:
-        if c not in existing_pain.columns:
-            existing_pain[c] = ""
-    existing_pain = existing_pain[PAIN_COLUMNS]
-    updated_pain = pd.concat([existing_pain, new_pain], ignore_index=True)
-    updated_pain.to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
-    st.success("Schmerzverlauf gespeichert.")
+            "Begleitsymptome": ", ".join(pain_symptoms),
+            "Bemerkung": pain_notes.strip()
+        }])
+        try:
+            existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
+        except:
+            existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
+        for c in PAIN_COLUMNS:
+            if c not in existing_pain.columns:
+                existing_pain[c] = ""
+        existing_pain = existing_pain[PAIN_COLUMNS]
+        updated_pain = pd.concat([existing_pain, new_pain], ignore_index=True)
+        updated_pain.to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
+        st.success("Schmerzverlauf gespeichert.")
 
 st.markdown("---")
 
@@ -244,7 +240,7 @@ st.markdown("---")
 st.markdown("## Datenverwaltung")
 delete_pw = st.text_input("Passwort für Daten löschen", type="password", key="delete_pw")
 if st.button("🗑️ Daten löschen", key="delete_data"):
-     if delete_pw == "loeschen":  # <- eigenes Passwort für Löschfunktion
+    if delete_pw == "loeschen":  # <- eigenes Passwort für Löschfunktion
         pd.DataFrame(columns=MED_COLUMNS).to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
         pd.DataFrame(columns=PAIN_COLUMNS).to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
         st.success("Alle gespeicherten Daten wurden gelöscht.")
