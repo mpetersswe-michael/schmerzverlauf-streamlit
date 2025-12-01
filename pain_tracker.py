@@ -7,6 +7,29 @@ import datetime as dt
 from io import BytesIO
 
 # ----------------------------
+# Button-Styles
+# ----------------------------
+st.markdown("""
+    <style>
+    /* Medikament speichern -> grün */
+    div.stButton > button#med_save {
+        background-color: #4CAF50;
+        color: white;
+    }
+    /* Schmerzverlauf speichern -> blau */
+    div.stButton > button#pain_save {
+        background-color: #2196F3;
+        color: white;
+    }
+    /* Daten löschen -> rot */
+    div.stButton > button#delete_data {
+        background-color: #f44336;
+        color: white;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# ----------------------------
 # Grundkonfiguration
 # ----------------------------
 st.set_page_config(page_title="Schmerzverlauf", layout="wide")
@@ -134,7 +157,7 @@ else:
 
 med_type = st.selectbox("Typ", ["Dauermedikation", "Bedarfsmedikation"], key="med_type")
 
-if st.button("💾 Medikament speichern"):
+if st.button("💾 Medikament speichern", key="med_save"):
     if not med_name.strip():
         st.warning("Bitte einen Namen eingeben.")
     else:
@@ -187,7 +210,8 @@ for label in ["Übelkeit", "Erbrechen"]:
 
 pain_notes = st.text_area("Bemerkungen", key="pain_notes", value=st.session_state.get("pain_notes", ""))
 
-if st.button("💾 Schmerzverlauf speichern"):
+if st.button("💾 Schmerzverlauf speichern", key="pain_save"):
+   
     if not pain_name.strip():
         st.warning("Bitte einen Namen eingeben.")
     else:
@@ -219,8 +243,8 @@ st.markdown("---")
 # ----------------------------
 st.markdown("## Datenverwaltung")
 delete_pw = st.text_input("Passwort für Daten löschen", type="password", key="delete_pw")
-if st.button("🗑️ Daten löschen"):
-    if delete_pw == "loeschen":  # <- eigenes Passwort für Löschfunktion
+if st.button("🗑️ Daten löschen", key="delete_data"):
+     if delete_pw == "loeschen":  # <- eigenes Passwort für Löschfunktion
         pd.DataFrame(columns=MED_COLUMNS).to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
         pd.DataFrame(columns=PAIN_COLUMNS).to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
         st.success("Alle gespeicherten Daten wurden gelöscht.")
@@ -294,6 +318,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
