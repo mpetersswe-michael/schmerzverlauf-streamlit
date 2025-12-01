@@ -143,9 +143,10 @@ pain_notes = st.text_area("Bemerkungen", key="pain_notes")
 
 if st.button("Schmerzverlauf speichern"):
     if not pain_name.strip():
+    else:
         st.warning("Bitte einen Namen eingeben.")
-    else
-    st.markdown("#### Schmerzverlauf")
+        st.markdown("#### Schmerzverlauf")
+
 df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
 df_filtered_pain = filter_by_name_exact(df_pain_all, filter_name)
 st.dataframe(df_filtered_pain, use_container_width=True, height=300)
@@ -176,6 +177,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
