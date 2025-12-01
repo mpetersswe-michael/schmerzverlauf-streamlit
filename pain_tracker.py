@@ -241,6 +241,22 @@ if chart_fig:
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
 
+# ----------------------------
+# Datenverwaltung: Löschen mit Passwort
+# ----------------------------
+st.markdown("---")
+st.markdown("## Datenverwaltung")
+
+delete_pw = st.text_input("Passwort für Daten löschen", type="password", key="delete_pw")
+
+if st.button("🗑️ Daten löschen"):
+    if delete_pw == "loeschen":  # <- eigenes Passwort für Löschfunktion
+        pd.DataFrame(columns=MED_COLUMNS).to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
+        pd.DataFrame(columns=PAIN_COLUMNS).to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
+        st.success("Alle gespeicherten Daten wurden gelöscht.")
+    else:
+        st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
