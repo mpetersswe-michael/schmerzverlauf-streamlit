@@ -219,7 +219,31 @@ st.download_button("CSV Schmerzverlauf herunterladen", data=csv_pain, file_name=
 # Diagramm ganz am Ende + Download
 # ----------------------------
 st.markdown("#### Diagramm")
-chart_fig = plot_pain(df_pain)
+chart_fig = def plot_pain(df):
+    if df.empty:
+        return None
+    dfx = df.copy()
+    dfx["Datum"] = pd.to_datetime(dfx["Datum"], errors="coerce")
+    dfx["Schmerzstärke"] = pd.to_numeric(dfx["Schmerzstärke"], errors="coerce")
+    dfx = dfx.dropna(subset=["Datum", "Schmerzstärke"]).sort_values("Datum")
+    if dfx.empty:
+        return None
+
+    # Namen extrahieren (erster eindeutiger Name im Filter)
+    patient_name = dfx["Name"].dropna().unique()
+    name_text = patient_name[0] if len(patient_name) > 0 and patient_name[0].strip() else "Unbekannt"
+
+    fig, ax = plt.subplots(figsize=(7, 3.5))
+    ax.plot(dfx["Datum"], dfx["Schmerzstärke"], color="#b00020", linewidth=2.0, marker="o", markersize=4)
+    ax.set_xlabel("Datum", fontsize=11)
+    ax.set_ylabel("Schmerzstärke", fontsize=11)
+    ax.set_title(f"Schmerzverlauf – {name_text}", fontsize=12)
+    ax.grid(True, linestyle="--", alpha=0.5)
+    ax.tick_params(labelsize=10)
+    fig.autofmt_xdate(rotation=20)
+    fig.tight_layout()
+    return fig
+
 if chart_fig:
     st.pyplot(chart_fig)
     # Download als PNG
@@ -229,6 +253,7 @@ if chart_fig:
     st.download_button("Diagramm als PNG herunterladen", data=buf, file_name=f"schmerzverlauf_{dt.date.today()}.png", mime="image/png")
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
