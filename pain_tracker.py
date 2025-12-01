@@ -130,7 +130,16 @@ med_date = st.date_input("Datum", value=st.session_state.get("med_date", dt.date
 med_drug = st.text_input("Medikament", key="med_drug", value=st.session_state.get("med_drug", ""))
 med_type = st.selectbox("Typ", ["Dauermedikation", "Bedarfsmedikation"], key="med_type")
 
-if st.button("Medikament speichern"):
+med_save = st.markdown("""
+    <style>
+    div.stButton > button:first-child {
+        background-color: #4CAF50;
+        color: white;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+if st.button("💾 Medikament speichern"):
+
     if not med_name.strip():
         st.warning("Bitte einen Namen eingeben.")
     elif not med_drug.strip():
@@ -186,7 +195,16 @@ for label in ["Übelkeit", "Erbrechen"]:
 
 pain_notes = st.text_area("Bemerkungen", key="pain_notes", value=st.session_state.get("pain_notes", ""))
 
-if st.button("Schmerzverlauf speichern"):
+pain_save = st.markdown("""
+    <style>
+    div.stButton > button:last-child {
+        background-color: #2196F3;
+        color: white;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+if st.button("💾 Schmerzverlauf speichern"):
+
     if not pain_name.strip():
         st.warning("Bitte einen Namen eingeben.")
     else:
@@ -293,6 +311,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
