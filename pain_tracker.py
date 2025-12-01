@@ -77,7 +77,7 @@ st.markdown("<h2>Schmerzverlauf</h2>", unsafe_allow_html=True)
 password = st.text_input("Login Passwort", type="password", disabled=st.session_state["auth"])
 
 if not st.session_state["auth"]:
-    if password == "QM1514":   # <- hier dein Passwort einsetzen
+    if password == "geheim":   # <- hier dein Passwort einsetzen
         st.session_state["auth"] = True
         st.success("Erfolgreich eingeloggt.")
     else:
@@ -94,14 +94,19 @@ with st.sidebar:
 st.markdown("---")
 
 # ----------------------------
-# Daten löschen
+# Daten löschen mit Passwort
 # ----------------------------
+st.markdown("## Datenverwaltung")
+delete_pw = st.text_input("Passwort für Daten löschen", type="password", key="delete_pw")
 if st.button("🗑️ Daten löschen"):
-    # Medikamente leeren
-    pd.DataFrame(columns=MED_COLUMNS).to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
-    # Schmerzverlauf leeren
-    pd.DataFrame(columns=PAIN_COLUMNS).to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
-    st.success("Alle gespeicherten Daten wurden gelöscht.")
+    if delete_pw == "loeschen":   # <- eigenes Passwort für Löschfunktion
+        pd.DataFrame(columns=MED_COLUMNS).to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
+        pd.DataFrame(columns=PAIN_COLUMNS).to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
+        st.success("Alle gespeicherten Daten wurden gelöscht.")
+    else:
+        st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
+st.markdown("---")
 
 # ----------------------------
 # Daten anzeigen und exportieren
@@ -168,6 +173,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
