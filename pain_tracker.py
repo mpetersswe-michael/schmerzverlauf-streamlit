@@ -239,27 +239,19 @@ with tab2:
 with tab3:
     st.subheader("Verlauf und Export")
 
-    # Druck-Button (öffnet Browser-Druckdialog)
-    if st.button("🖨️ Drucken"):
-        st.markdown(
-            """
-            <script>
-            window.print();
-            </script>
-            """,
-            unsafe_allow_html=True
-        )
-
     # Filterfeld
     filter_name = st.text_input("Filter nach Name (optional)", value="")
 
-    # Seite 1: Medikamentenliste
+    # Medikamentenliste (Export)
     st.markdown("### Verabreichte Medikamente und den Patientennamen")
     df_med = load_data(DATA_FILE_MED, MED_COLUMNS)
     df_filtered_med = filter_by_name(df_med, filter_name)
+
+    # Anzeige
     st.dataframe(df_filtered_med, use_container_width=True, height=240)
 
-    csv_med = df_filtered_med.to_csv(index=False).encode("utf-8")
+    # CSV-Export mit korrekter Spaltenreihenfolge
+    csv_med = df_filtered_med[MED_COLUMNS].to_csv(index=False, encoding="utf-8")
     st.download_button(
         "CSV Medikamente herunterladen",
         data=csv_med,
@@ -267,16 +259,18 @@ with tab3:
         mime="text/csv"
     )
 
-    # Seitenumbruch → Seite 2
-    st.markdown("<div style='page-break-before: always;'></div>", unsafe_allow_html=True)
+    st.divider()
 
-    # Seite 2: Schmerzverlauf
+    # Schmerzverlauf (Export)
     st.markdown("### Gefilterte Tabelle – Schmerzverlauf")
     df_pain = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
     df_filtered_pain = filter_by_name(df_pain, filter_name)
-    st.dataframe(df_filtered_pain, use_container_width=True, height=600)  # bewusst höher für PDF-Seite
 
-    csv_pain = df_filtered_pain.to_csv(index=False).encode("utf-8")
+    # Anzeige
+    st.dataframe(df_filtered_pain, use_container_width=True, height=280)
+
+    # CSV-Export mit korrekter Spaltenreihenfolge
+    csv_pain = df_filtered_pain[PAIN_COLUMNS].to_csv(index=False, encoding="utf-8")
     st.download_button(
         "CSV Schmerzverlauf herunterladen",
         data=csv_pain,
@@ -284,17 +278,5 @@ with tab3:
         mime="text/csv"
     )
 
-    # Kompaktes Diagramm (kleiner, feste Breite)
-    st.markdown("### Diagramm – Schmerzverlauf")
-    chart_png = plot_pain(df_filtered_pain)  # in plot_pain: figsize=(3.2, 1.6)
-    st.image(chart_png, caption="Liniendiagramm", width=280)  # feste Breite, nicht container_width
 
-    st.divider()
-    st.subheader("Druck-Hinweis")
-    st.info("Mit dem Button oben öffnet sich der Druckdialog. "
-            "Seite 1 enthält die Medikamentenliste, Seite 2 den Schmerzverlauf und das kompakte Diagramm.")
-
-    st.subheader("Druck-Hinweis")
-    st.info("Mit dem Button oben öffnet sich der Druckdialog. "
-            "Seite 1 enthält die Medikamentenliste, Seite 2 den Schmerzverlauf und das Diagramm.")
 
