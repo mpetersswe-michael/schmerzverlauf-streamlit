@@ -236,56 +236,54 @@ with tab2:
                 st.success("Eintrag gespeichert ✅")
 
 # ----------------------------
-# Tab 3: Verlauf / Export
+# Tab 3: Verlauf / Export – beide Tabellen
 # ----------------------------
 with tab3:
     st.subheader("Verlauf und Export")
+
+    # Schmerz-Daten laden und filtern
     df_pain = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
-
     filter_name = st.text_input("Filter nach Name (optional)", value="")
-    df_filtered = filter_by_name(df_pain, filter_name)
+    df_filtered_pain = filter_by_name(df_pain, filter_name)
 
+    # Zwei Spalten: links Tabelle, rechts Diagramm
     c_table, c_chart = st.columns([3, 2])
     with c_table:
-        st.markdown("**Gefilterte Tabelle**")
-        st.dataframe(df_filtered, use_container_width=True, height=420)
+        st.markdown("**Gefilterte Tabelle – Schmerzverlauf**")
+        st.dataframe(df_filtered_pain, use_container_width=True, height=300)
 
-        csv_bytes = df_filtered.to_csv(index=False).encode("utf-8")
+        csv_pain = df_filtered_pain.to_csv(index=False).encode("utf-8")
         st.download_button(
-            "CSV herunterladen",
-            data=csv_bytes,
+            "CSV Schmerzverlauf herunterladen",
+            data=csv_pain,
             file_name=f"pain_tracking_{dt.date.today()}.csv",
             mime="text/csv"
         )
 
     with c_chart:
         st.markdown("**Diagramm (Schmerzverlauf)**")
-        chart_png = plot_pain(df_filtered)
+        chart_png = plot_pain(df_filtered_pain)
         st.image(chart_png, caption="Liniendiagramm", use_column_width=True)
+
+    st.divider()
+
+    # Medikamenten-Daten (volle Breite unterhalb)
+    st.markdown("**Tabelle – Medikamentenliste**")
+    df_med = load_data(DATA_FILE_MED, MED_COLUMNS)
+    st.dataframe(df_med, use_container_width=True, height=240)
+
+    csv_med = df_med.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        "CSV Medikamente herunterladen",
+        data=csv_med,
+        file_name=f"medications_{dt.date.today()}.csv",
+        mime="text/csv"
+    )
 
     st.divider()
     st.subheader("Druck-Hinweis")
     st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
-            "Die Tabelle und das Diagramm sind direkt sichtbar.")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            "Die Tabellen und das Diagramm sind direkt sichtbar.")
 
 
 
