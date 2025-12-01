@@ -143,9 +143,26 @@ pain_notes = st.text_area("Bemerkungen", key="pain_notes")
 
 if st.button("Schmerzverlauf speichern"):
     if not pain_name.strip():
-    else:
         st.warning("Bitte einen Namen eingeben.")
-        st.markdown("#### Schmerzverlauf")
+    else:
+        # Hier kommt der Speichervorgang
+        new_pain = pd.DataFrame([{
+            "Name": pain_name.strip(),
+            "Datum": pain_date.strftime("%Y-%m-%d"),
+            "Schmerzstärke": pain_level,
+            "Art": ", ".join(pain_types),
+            "Lokalisation": ", ".join(pain_locations),
+            "Begleitsymptome": ", ".join(pain_symptoms),
+            "Bemerkung": pain_notes.strip()
+        }])
+        try:
+            existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
+        except:
+            existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
+        updated_pain = pd.concat([existing_pain, new_pain], ignore_index=True)
+        updated_pain.to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
+        st.success("Schmerzverlauf gespeichert.")
+
 
 df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
 df_filtered_pain = filter_by_name_exact(df_pain_all, filter_name)
@@ -177,6 +194,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
