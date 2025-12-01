@@ -240,12 +240,15 @@ with tab3:
     st.subheader("Verlauf und Export")
 
     # Druck-Button (öffnet Browser-Druckdialog)
-    st.markdown(
-        """
-        <button onclick="window.print()">🖨️ Drucken</button>
-        """,
-        unsafe_allow_html=True
-    )
+    if st.button("🖨️ Drucken"):
+        st.markdown(
+            """
+            <script>
+            window.print();
+            </script>
+            """,
+            unsafe_allow_html=True
+        )
 
     # Filterfeld
     filter_name = st.text_input("Filter nach Name (optional)", value="")
@@ -283,11 +286,10 @@ with tab3:
 
     # Kompaktes Diagramm (kleiner, feste Breite)
     st.markdown("### Diagramm – Schmerzverlauf")
-    chart_png = plot_pain(df_filtered_pain)  # in plot_pain: figsize=(3.5, 1.8)
-    st.image(chart_png, caption="Liniendiagramm", width=350)  # feste Breite, nicht container_width
+    chart_png = plot_pain(df_filtered_pain)  # in plot_pain: figsize=(3.2, 1.6)
+    st.image(chart_png, caption="Liniendiagramm", width=300)  # feste Breite
 
     st.divider()
     st.subheader("Druck-Hinweis")
     st.info("Mit dem Button oben öffnet sich der Druckdialog. "
             "Seite 1 enthält die Medikamentenliste, Seite 2 den Schmerzverlauf und das Diagramm.")
-
