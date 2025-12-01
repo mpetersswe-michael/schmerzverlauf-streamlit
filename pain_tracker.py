@@ -88,7 +88,7 @@ if not st.session_state.get("auth", False):
 # ----------------------------
 password = st.text_input("Login Passwort", type="password", disabled=st.session_state.get("auth", False))
 if not st.session_state.get("auth", False):
-    if password == "QM1514":
+    if password == "geheim":
         st.session_state["auth"] = True
     else:
         st.warning("Bitte Passwort eingeben")
@@ -109,6 +109,29 @@ with st.sidebar:
 # ----------------------------
 st.markdown("---")
 st.markdown("## Eingabe und Verlauf")
+
+# ----------------------------
+# ✏️ Neuer Eintrag-Button (oben auf der Eingabeseite)
+# ----------------------------
+if st.button("✏️ Neuer Eintrag"):
+    # Medikamentenfelder zurücksetzen
+    st.session_state["med_name"] = ""
+    st.session_state["med_drug"] = ""
+    st.session_state["med_type"] = "Dauermedikation"
+
+    # Schmerzverlauf-Felder zurücksetzen
+    st.session_state["pain_name"] = ""
+    st.session_state["pain_notes"] = ""
+    st.session_state["pain_level"] = 0
+    for label in ["Stechend", "Dumpf", "Brennend", "Ziehend",
+                  "Kopf", "Rücken", "Bauch", "Bein",
+                  "Übelkeit", "Erbrechen"]:
+        if f"type_{label}" in st.session_state:
+            st.session_state[f"type_{label}"] = False
+        if f"loc_{label}" in st.session_state:
+            st.session_state[f"loc_{label}"] = False
+        if f"sym_{label}" in st.session_state:
+            st.session_state[f"sym_{label}"] = False
 
 # ----------------------------
 # Medikamenten-Eintrag
@@ -145,7 +168,7 @@ if st.button("Medikament speichern"):
 st.markdown("### Schmerzverlauf-Eintrag")
 pain_name = st.text_input("Name", key="pain_name")
 pain_date = st.date_input("Datum", value=dt.date.today(), key="pain_date")
-pain_level = st.slider("Schmerzstärke (0–10)", min_value=0, max_value=10, key="pain_level")
+pain_level = st.slider("Schmerzstärke (NRS 0–10)", min_value=0, max_value=10, step=1, key="pain_level")
 
 st.markdown("**Art**")
 pain_types = [label for label in ["Stechend", "Dumpf", "Brennend", "Ziehend"] if st.checkbox(label, key=f"type_{label}")]
@@ -172,6 +195,7 @@ if st.button("Schmerzverlauf speichern"):
             "Bemerkung": pain_notes.strip()
         }])
         try:
+            existing_pain = pd.read_csv(DATA_FILE_PAIN, sep="        try:
             existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
         except:
             existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
@@ -191,7 +215,12 @@ df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
 df_filtered_med = filter_by_name(df_med_all, filter_name)
 st.dataframe(df_filtered_med, use_container_width=True, height=300)
 csv_med = to_csv_semicolon(df_filtered_med)
-st.download_button("CSV Medikamente herunterladen", data=csv_med, file_name=f"medications_{dt.date.today()}.csv", mime="text/csv")
+st.download_button(
+    "CSV Medikamente herunterladen",
+    data=csv_med,
+    file_name=f"medications_{dt.date.today()}.csv",
+    mime="text/csv"
+)
 
 # Schmerzverlauf
 st.markdown("#### Schmerzverlauf")
@@ -225,6 +254,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
