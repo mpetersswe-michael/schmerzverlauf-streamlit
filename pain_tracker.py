@@ -34,8 +34,8 @@ def load_data(file, columns):
     return df
 
 def filter_by_name_exact(df, name):
+    """Exakter Namensfilter (trim + lowercase)."""
     base = df.copy()
-    # Namen bereinigen: trimmen + lowercase
     base["Name_clean"] = base["Name"].str.strip().str.lower()
     if name and name.strip():
         mask = base["Name_clean"] == name.strip().lower()
@@ -48,7 +48,7 @@ def to_csv_semicolon(df):
     return df.to_csv(index=False, sep=";", encoding="utf-8-sig").encode("utf-8-sig")
 
 def plot_pain(df):
-    """Kleines Liniendiagramm für Schmerzverlauf mit deutschem Datumsformat."""
+    """Liniendiagramm für Schmerzverlauf mit deutschem Datumsformat."""
     if df.empty:
         return None
     dfx = df.copy()
@@ -107,7 +107,6 @@ if st.button("✏️ Neuer Eintrag"):
     st.session_state["med_date"] = dt.date.today()
     st.session_state["pain_date"] = dt.date.today()
     st.session_state["pain_level"] = 0
-    # Checkbox-Reset sicherheitshalber
     for label in ["Stechend", "Dumpf", "Brennend", "Ziehend", "Kopf", "Rücken", "Bauch", "Bein", "Übelkeit", "Erbrechen"]:
         for prefix in ["type_", "loc_", "sym_"]:
             k = f"{prefix}{label}"
@@ -192,12 +191,13 @@ st.markdown("## Daten anzeigen und exportieren")
 df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
 df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
 
-# Gemeinsames Filterfeld für beide Tabellen
-filter_name = st.text_input("Filter nach Name (exakt)", value="", key="filter_all")
+# Getrennte Filterfelder
+filter_name_med = st.text_input("Filter nach Name (Medikamente, exakt)", value="", key="filter_med")
+filter_name_pain = st.text_input("Filter nach Name (Schmerzverlauf, exakt)", value="", key="filter_pain")
 
 # Medikamente
 st.markdown("### Medikamente")
-df_filtered_med = filter_by_name_exact(df_med_all, filter_name)
+df_filtered_med = filter_by_name_exact(df_med_all, filter_name_med)
 st.dataframe(df_filtered_med, use_container_width=True, height=300)
 csv_med = to_csv_semicolon(df_filtered_med)
 st.download_button(
@@ -209,7 +209,7 @@ st.download_button(
 
 # Schmerzverlauf
 st.markdown("### Schmerzverlauf")
-df_filtered_pain = filter_by_name_exact(df_pain_all, filter_name)
+df_filtered_pain = filter_by_name_exact(df_pain_all, filter_name_pain)
 st.dataframe(df_filtered_pain, use_container_width=True, height=300)
 csv_pain = to_csv_semicolon(df_filtered_pain)
 st.download_button(
@@ -219,7 +219,7 @@ st.download_button(
     mime="text/csv"
 )
 
-# Diagramm
+# Diagramm (nutzt den Schmerzverlauf-Filter)
 st.markdown("### Diagramm")
 chart_fig = plot_pain(df_filtered_pain)
 if chart_fig:
@@ -235,6 +235,8 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
+
 
 
 
