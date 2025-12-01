@@ -7,24 +7,28 @@ import datetime as dt
 from io import BytesIO
 
 # ----------------------------
-# Button-Styles
+# Button-Styles (funktionierend)
 # ----------------------------
 st.markdown("""
     <style>
-    button[data-testid="med_save"] {
-        background-color: #4CAF50 !important;
-        color: white !important;
+    /* Medikament speichern -> grün */
+    div.stButton > button:has(span:contains("Medikament speichern")) {
+        background-color: #4CAF50;
+        color: white;
     }
-    button[data-testid="pain_save"] {
-        background-color: #2196F3 !important;
-        color: white !important;
+    /* Schmerzverlauf speichern -> blau */
+    div.stButton > button:has(span:contains("Schmerzverlauf speichern")) {
+        background-color: #2196F3;
+        color: white;
     }
-    button[data-testid="delete_data"] {
-        background-color: #f44336 !important;
-        color: white !important;
+    /* Daten löschen -> rot */
+    div.stButton > button:has(span:contains("Daten löschen")) {
+        background-color: #f44336;
+        color: white;
     }
     </style>
     """, unsafe_allow_html=True)
+
 
 # ----------------------------
 # Grundkonfiguration
@@ -314,6 +318,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
