@@ -12,7 +12,7 @@ DATA_FILE_MED = "medications.csv"
 DATA_FILE_PAIN = "pain_tracking.csv"
 
 MED_COLUMNS = ["Name", "Datum", "Medikament"]
-PAIN_COLUMNS = ["Name", "Datum", "Schmerzstärke"]
+PAIN_COLUMNS = ["Name", "Datum", "Schmerzstärke", "Art", "Lokalisation", "Auslöser", "Bemerkung"]
 
 # ----------------------------
 # CSS für Layout und Icon
@@ -78,16 +78,21 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
-# Login
+# Login + Logout
 # ----------------------------
 st.markdown("<span class='red-chart-icon'></span><span style='font-size:28px;'>Schmerzverlauf</span>", unsafe_allow_html=True)
 password = st.text_input("Login Passwort", type="password")
-if password != "QM1514":
+if password != "geheim":
     st.warning("Bitte Passwort eingeben")
     st.stop()
 
+if st.button("Logout"):
+    st.session_state.clear()
+    st.info("Sie wurden abgemeldet.")
+    st.stop()
+
 # ----------------------------
-# Eingabe: Medikamente
+# Medikamenten-Eintrag
 # ----------------------------
 st.markdown("## Medikamenten-Eintrag")
 med_name = st.text_input("Name", key="med_name")
@@ -109,18 +114,50 @@ if st.button("Medikament speichern"):
     st.success("Medikament gespeichert.")
 
 # ----------------------------
-# Eingabe: Schmerzverlauf
+# Schmerzverlauf-Eintrag
 # ----------------------------
 st.markdown("## Schmerzverlauf-Eintrag")
 pain_name = st.text_input("Name", key="pain_name")
 pain_date = st.date_input("Datum", value=dt.date.today(), key="pain_date")
 pain_level = st.slider("Schmerzstärke (0–10)", min_value=0, max_value=10, key="pain_level")
 
+# Checkboxen: Schmerzart
+st.markdown("**Schmerzart**")
+pain_types = []
+if st.checkbox("Stechend"): pain_types.append("Stechend")
+if st.checkbox("Dumpf"): pain_types.append("Dumpf")
+if st.checkbox("Brennend"): pain_types.append("Brennend")
+if st.checkbox("Ziehend"): pain_types.append("Ziehend")
+
+# Checkboxen: Lokalisation
+st.markdown("**Lokalisation**")
+pain_locations = []
+if st.checkbox("Kopf"): pain_locations.append("Kopf")
+if st.checkbox("Rücken"): pain_locations.append("Rücken")
+if st.checkbox("Bauch"): pain_locations.append("Bauch")
+if st.checkbox("Bein"): pain_locations.append("Bein")
+
+# Checkboxen: Auslöser
+st.markdown("**Auslöser**")
+pain_triggers = []
+if st.checkbox("Bewegung"): pain_triggers.append("Bewegung")
+if st.checkbox("Stress"): pain_triggers.append("Stress")
+if st.checkbox("Wetter"): pain_triggers.append("Wetter")
+if st.checkbox("Unbekannt"): pain_triggers.append("Unbekannt")
+
+# Freitextfeld
+pain_notes = st.text_area("Bemerkungen", key="pain_notes")
+
+# Speichern
 if st.button("Schmerzverlauf speichern"):
     new_pain = pd.DataFrame([{
         "Name": pain_name,
         "Datum": pain_date.strftime("%Y-%m-%d"),
-        "Schmerzstärke": pain_level
+        "Schmerzstärke": pain_level,
+        "Art": ", ".join(pain_types),
+        "Lokalisation": ", ".join(pain_locations),
+        "Auslöser": ", ".join(pain_triggers),
+        "Bemerkung": pain_notes
     }])
     try:
         existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
@@ -131,7 +168,7 @@ if st.button("Schmerzverlauf speichern"):
     st.success("Schmerzverlauf gespeichert.")
 
 # ----------------------------
-# Filter und Anzeige
+# Daten anzeigen und exportieren
 # ----------------------------
 st.markdown("## Daten anzeigen und exportieren")
 filter_name = st.text_input("Filter nach Name (optional)", value="", key="filter_all")
@@ -159,4 +196,6 @@ if chart_fig:
     st.pyplot(chart_fig)
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
+
 
