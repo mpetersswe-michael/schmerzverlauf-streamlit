@@ -5,7 +5,9 @@ import matplotlib.dates as mdates
 import datetime as dt
 from io import BytesIO
 
-# Button-Farben über Position
+# ----------------------------
+# Button-Styles
+# ----------------------------
 st.markdown("""
     <style>
     div.stButton > button:nth-of-type(1) {
@@ -23,35 +25,20 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# ----------------------------
+# Grundkonfiguration
+# ----------------------------
 st.set_page_config(page_title="Schmerzverlauf", layout="wide")
 st.markdown("# 📈 Schmerzverlauf")
 
-# Authentifizierung
-if "auth" not in st.session_state:
-    st.session_state["auth"] = False
-
-password = st.text_input("Login Passwort", type="password", disabled=st.session_state["auth"])
-if not st.session_state["auth"]:
-    if password == "geheim":
-        st.session_state["auth"] = True
-        st.success("Erfolgreich eingeloggt.")
-    else:
-        st.warning("Bitte Passwort eingeben.")
-        st.stop()
-
-with st.sidebar:
-    st.markdown("### Navigation")
-    if st.button("Logout"):
-        st.session_state.clear()
-        st.info("Sie wurden abgemeldet.")
-        st.stop()
-
-# Datenstruktur
 DATA_FILE_MED = "medications.csv"
 DATA_FILE_PAIN = "pain_tracking.csv"
 MED_COLUMNS = ["Name", "Datum", "Medikament", "Typ"]
 PAIN_COLUMNS = ["Name", "Datum", "Schmerzstärke", "Art", "Lokalisation", "Begleitsymptome", "Bemerkung"]
 
+# ----------------------------
+# Hilfsfunktionen
+# ----------------------------
 def load_data(file, columns):
     try:
         df = pd.read_csv(file, sep=";", encoding="utf-8-sig")
@@ -82,75 +69,54 @@ def plot_pain(df):
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%d.%m.%Y"))
     fig.autofmt_xdate(rotation=20); fig.tight_layout()
     return fig
-        new_pain = pd.DataFrame([{
-            "Name": pain_name.strip(),
-            "Datum": pain_date.strftime("%Y-%m-%d"),
-            "Schmerzstärke": pain_level,
-            "Art": ", ".join(pain_types),
-            "Lokalisation": ", ".join(pain_locations),
-            "Begleitsymptome": ", ".join(pain_symptoms),
-            "Bemerkung": pain_notes.strip()
-        }])
-        try:
-            existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
-        except:
-            existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
-        for c in PAIN_COLUMNS:
-            if c not in existing_pain.columns:
-                existing_pain[c] = ""
-        existing_pain = existing_pain[PAIN_COLUMNS]
-        updated_pain = pd.concat([existing_pain, new_pain], ignore_index=True)
-        updated_pain.to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
-        st.success("Schmerzverlauf gespeichert.")
-
-st.markdown("---")
 
 # ----------------------------
-# Datenverwaltung: Löschen mit Passwort
+# Authentifizierung
 # ----------------------------
-st.markdown("## Datenverwaltung")
-delete_pw = st.text_input("Passwort für Daten löschen", type="password", key="delete_pw")
-if st.button("🗑️ Daten löschen"):
-    if delete_pw == "loeschen":  # <- eigenes Passwort für Löschfunktion
-        pd.DataFrame(columns=MED_COLUMNS).to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
-        pd.DataFrame(columns=PAIN_COLUMNS).to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
-        st.success("Alle gespeicherten Daten wurden gelöscht.")
+if "auth" not in st.session_state:
+    st.session_state["auth"] = False
+
+password = st.text_input("Login Passwort", type="password", disabled=st.session_state["auth"])
+if not st.session_state["auth"]:
+    if password == "geheim":
+        st.session_state["auth"] = True
+        st.success("Erfolgreich eingeloggt.")
     else:
-        st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+        st.warning("Bitte Passwort eingeben.")
+        st.stop()
 
-st.markdown("---")
+with st.sidebar:
+    st.markdown("### Navigation")
+    if st.button("Logout"):
+        st.session_state.clear()
+        st.info("Sie wurden abgemeldet.")
+        st.stop()
 
 # ----------------------------
-# Daten anzeigen und exportieren
+# Formular-Reset
 # ----------------------------
-st.markdown("## Daten anzeigen und exportieren")
-
-# Daten laden
-df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
-df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
-
-# Dropdown-Filter für Medikamente
-filter_name_med = st.selectbox(
-    "Filter nach Name (Medikamente)",
-    options=[""] + sorted(df_med_all["Name"].dropna().str.strip().unique()),
-    index=0,
-    key="filter_med"
-)
-
-# Dropdown-Filter für Schmerzverlauf
-filter_name_pain = st.selectbox(
-    "Filter nach Name (Schmerzverlauf)",
-    options=[""] + sorted(df_pain_all["Name"].dropna().str.strip().unique()),
-    index=0,
-    key="filter_pain"
-)
-
-# Medikamente
-st.markdown("---")
+if st.button("✏️ Neuer Eintrag"):
+    st.session_state["med_name"] = ""
+    st.session_state["med_date"] = dt.date.today()
+    st.session_state["med_given"] = "Nein"
+    st.session_state["med_drug"] = ""
+    st.session_state["med_type"] = "Dauermedikation"
+    st.session_state["pain_name"] = ""
+    st.session_state["pain_date"] = dt.date.today()
+    st.session_state["pain_level"] = 0
+    st.session_state["pain_notes"] = ""
+    for label in ["Stechend", "Dumpf", "Brennend", "Ziehend"]:
+        st.session_state[f"type_{label}"] = False
+    for label in ["Kopf", "Rücken", "Bauch", "Bein"]:
+        st.session_state[f"loc_{label}"] = False
+    for label in ["Übelkeit", "Erbrechen"]:
+        st.session_state[f"sym_{label}"] = False
+    st.success("Formulare zurückgesetzt.")
 
 # ----------------------------
 # Medikamenten-Eingabe
 # ----------------------------
+st.markdown("---")
 st.markdown("## Medikamenten-Eintrag")
 
 med_name = st.text_input("Name", key="med_name", value=st.session_state.get("med_name", ""))
@@ -187,54 +153,11 @@ if st.button("💾 Medikament speichern"):
         updated_med = pd.concat([existing_med, new_med], ignore_index=True)
         updated_med.to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
         st.success("Medikament gespeichert.")
-
-st.markdown("---")
-
-# ----------------------------
-# Medikamenten-Eingabe
-# ----------------------------
-st.markdown("## Medikamenten-Eintrag")
-
-med_name = st.text_input("Name", key="med_name", value=st.session_state.get("med_name", ""))
-med_date = st.date_input("Datum", value=st.session_state.get("med_date", dt.date.today()), key="med_date")
-
-st.markdown("**Medikament verabreicht?**")
-med_given = st.radio("Auswahl", ["Ja", "Nein"], key="med_given", index=0 if st.session_state.get("med_given") == "Ja" else 1)
-
-if med_given == "Ja":
-    med_drug = st.text_input("Welches Medikament?", key="med_drug", value=st.session_state.get("med_drug", ""))
-else:
-    med_drug = "keines"
-
-med_type = st.selectbox("Typ", ["Dauermedikation", "Bedarfsmedikation"], key="med_type")
-
-if st.button("💾 Medikament speichern"):
-    if not med_name.strip():
-        st.warning("Bitte einen Namen eingeben.")
-    else:
-        new_med = pd.DataFrame([{
-            "Name": med_name.strip(),
-            "Datum": med_date.strftime("%Y-%m-%d"),
-            "Medikament": med_drug.strip(),
-            "Typ": med_type
-        }])
-        try:
-            existing_med = pd.read_csv(DATA_FILE_MED, sep=";", encoding="utf-8-sig")
-        except:
-            existing_med = pd.DataFrame(columns=MED_COLUMNS)
-        for c in MED_COLUMNS:
-            if c not in existing_med.columns:
-                existing_med[c] = ""
-        existing_med = existing_med[MED_COLUMNS]
-        updated_med = pd.concat([existing_med, new_med], ignore_index=True)
-        updated_med.to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
-        st.success("Medikament gespeichert.")
-
-st.markdown("---")
 
 # ----------------------------
 # Schmerzverlauf-Eingabe
 # ----------------------------
+st.markdown("---")
 st.markdown("## Schmerzverlauf-Eintrag")
 
 pain_name = st.text_input("Name", key="pain_name", value=st.session_state.get("pain_name", ""))
@@ -272,7 +195,7 @@ if st.button("💾 Schmerzverlauf speichern"):
             "Art": ", ".join(pain_types),
             "Lokalisation": ", ".join(pain_locations),
             "Begleitsymptome": ", ".join(pain_symptoms),
-            "Bemerkung": pain_notes.strip()
+                      "Bemerkung": pain_notes.strip()
         }])
         try:
             existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
@@ -286,12 +209,23 @@ if st.button("💾 Schmerzverlauf speichern"):
         updated_pain.to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
         st.success("Schmerzverlauf gespeichert.")
 
-st.markdown("---")
-
 # ----------------------------
 # Diagramm
 # ----------------------------
+st.markdown("---")
 st.markdown("### Diagramm")
+
+# Daten laden und filtern
+df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
+filter_name_pain = st.selectbox(
+    "Filter nach Name für Diagramm",
+    options=[""] + sorted(df_pain_all["Name"].dropna().str.strip().unique()),
+    index=0,
+    key="filter_pain_chart"
+)
+df_filtered_pain = filter_by_name_exact(df_pain_all, filter_name_pain)
+
+# Diagramm anzeigen
 chart_fig = plot_pain(df_filtered_pain)
 if chart_fig:
     st.pyplot(chart_fig)
@@ -306,6 +240,8 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
+
 
 
 
