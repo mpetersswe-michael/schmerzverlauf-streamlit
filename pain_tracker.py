@@ -82,7 +82,7 @@ def plot_pain(df):
 # ----------------------------
 st.markdown("<span class='red-chart-icon'></span><span style='font-size:28px;'>Schmerzverlauf</span>", unsafe_allow_html=True)
 password = st.text_input("Login Passwort", type="password")
-if password != "geheim":
+if password != "QM1514":
     st.warning("Bitte Passwort eingeben")
     st.stop()
 
@@ -198,6 +198,7 @@ if chart_fig:
     st.pyplot(chart_fig)
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
