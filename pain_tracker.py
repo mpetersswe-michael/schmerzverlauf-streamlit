@@ -6,33 +6,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # ----------------------------
-# Konfiguration & Konstanten
+# Konfiguration
 # ----------------------------
 DATA_FILE = "data.csv"
+DEFAULT_COLUMNS = ["Name", "Datum", "Schmerzintensität", "Bemerkung", "Schmerzsituation"]
+PAIN_SITUATIONS = ["Vor Einnahme", "Nach Einnahme", "Stabil", "Instabil"]
 
-DEFAULT_COLUMNS = [
-    "Name",
-    "Datum",
-    "Schmerzintensität",
-    "Bemerkung",
-    "Schmerzsituation"
-]
-
-PAIN_SITUATIONS = [
-    "Vor Einnahme",
-    "Nach Einnahme",
-    "Stabil",
-    "Instabil"
-]
-
-# Demo-Login-Daten (einfach, ohne Backend)
-VALID_USERS = {
-    "admin": "admin123",
-    "michael": "pain2025"
-}
-
+# Nur ein Passwort nötig
+VALID_PASSWORD = "pain2025"
 SESSION_KEY_AUTH = "is_authenticated"
-SESSION_KEY_USER = "username"
 
 # ----------------------------
 # Hilfsfunktionen: Daten
@@ -54,12 +36,8 @@ def load_data() -> pd.DataFrame:
 def save_data(df: pd.DataFrame) -> None:
     df.to_csv(DATA_FILE, index=False, encoding="utf-8")
 
-def append_entry(df: pd.DataFrame,
-                 name: str,
-                 date_val: dt.date,
-                 intensity: int,
-                 note: str,
-                 situation: str) -> pd.DataFrame:
+def append_entry(df: pd.DataFrame, name: str, date_val: dt.date,
+                 intensity: int, note: str, situation: str) -> pd.DataFrame:
     new_row = {
         "Name": name.strip(),
         "Datum": date_val,
@@ -67,17 +45,13 @@ def append_entry(df: pd.DataFrame,
         "Bemerkung": note.strip(),
         "Schmerzsituation": situation
     }
-    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-    return df
+    return pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
 
 def filter_by_name(df: pd.DataFrame, name_filter: str) -> pd.DataFrame:
     if not name_filter:
         return df.copy()
     return df[df["Name"].str.contains(name_filter, case=False, na=False)].copy()
 
-# ----------------------------
-# Hilfsfunktionen: Visualisierung
-# ----------------------------
 def plot_pain_over_time(df_filtered: pd.DataFrame) -> io.BytesIO:
     buf = io.BytesIO()
     if df_filtered.empty:
@@ -111,31 +85,29 @@ def plot_pain_over_time(df_filtered: pd.DataFrame) -> io.BytesIO:
     return buf
 
 # ----------------------------
-# Auth: Login/Logout (Session-State)
+# Auth: Login/Logout
 # ----------------------------
 def login_form():
     st.subheader("Login")
     with st.form("login_form"):
-        username = st.text_input("Benutzername")
         password = st.text_input("Passwort", type="password")
         submit = st.form_submit_button("Einloggen")
         if submit:
-            if username in VALID_USERS and VALID_USERS[username] == password:
+            if password == VALID_PASSWORD:
                 st.session_state[SESSION_KEY_AUTH] = True
-                st.session_state[SESSION_KEY_USER] = username
                 st.success("Erfolgreich eingeloggt.")
                 st.rerun()
             else:
-                st.error("Ungültige Zugangsdaten.")
+                st.error("Ungültiges Passwort.")
 
-def logout_button():
-    if st.session_state.get(SESSION_KEY_AUTH, False):
-        st.caption(f"Eingeloggt als: {st.session_state.get(SESSION_KEY_USER)}")
-        if st.button("Logout"):
-            st.session_state[SESSION_KEY_AUTH] = False
-            st.session_state[SESSION_KEY_USER] = None
-            st.success("Abgemeldet.")
-            st.rerun()
+def sidebar_logout():
+    with st.sidebar:
+        st.markdown("### Navigation")
+        if st.session_state.get(SESSION_KEY_AUTH, False):
+            if st.button("Logout"):
+                st.session_state[SESSION_KEY_AUTH] = False
+                st.success("Abgemeldet.")
+                st.rerun()
 
 # ----------------------------
 # UI
@@ -148,7 +120,7 @@ if not st.session_state.get(SESSION_KEY_AUTH, False):
     login_form()
     st.stop()
 
-logout_button()
+sidebar_logout()
 
 df = load_data()
 
@@ -168,13 +140,8 @@ with st.form(key="input_form", clear_on_submit=False):
 
     submit = st.form_submit_button("Speichern (append-only)")
     if submit:
-        errors = []
         if not name.strip():
-            errors.append("Name ist erforderlich.")
-        if situation not in PAIN_SITUATIONS:
-            errors.append("Ungültige Schmerzsituation.")
-        if errors:
-            st.error("Bitte korrigieren:\n- " + "\n- ".join(errors))
+            st.error("Name ist erforderlich.")
         else:
             df = append_entry(df, name, date_val, intensity, note, situation)
             save_data(df)
@@ -207,10 +174,10 @@ with c_chart:
     st.image(chart_png, caption="Liniendiagramm der Schmerzintensität", use_column_width=True)
 
 st.divider()
-
 st.subheader("Druck-Hinweis")
 st.info("Zum Drucken bitte die Seite über den Browser drucken (Strg+P bzw. ⌘+P). "
         "Die Tabelle und das Diagramm sind direkt sichtbar.")
+
 
 
 
