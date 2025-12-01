@@ -27,15 +27,6 @@ thead tr th {
 tbody tr td {
     font-weight: 400 !important;
 }
-.red-chart-icon {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    margin-right: 8px;
-    background: linear-gradient(135deg, #b00020 0%, #ff3b30 100%);
-    clip-path: polygon(0% 70%, 20% 60%, 35% 75%, 55% 40%, 70% 55%, 85% 30%, 100% 45%, 100% 100%, 0% 100%);
-    vertical-align: middle;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -78,11 +69,20 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
+# Startüberschrift mit Icon
+# ----------------------------
+st.markdown("""
+<div style='display:flex; align-items:center; gap:12px; margin-bottom:20px;'>
+    <img src='https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Line_chart_icon.svg/120px-Line_chart_icon.svg.png' width='32'>
+    <span style='font-size:28px;'>Schmerzverlauf</span>
+</div>
+""", unsafe_allow_html=True)
+
+# ----------------------------
 # Login
 # ----------------------------
-st.markdown("<span class='red-chart-icon'></span><span style='font-size:28px;'>Schmerzverlauf</span>", unsafe_allow_html=True)
 password = st.text_input("Login Passwort", type="password")
-if password != "QM1514":
+if password != "geheim":
     st.warning("Bitte Passwort eingeben")
     st.stop()
 
@@ -95,10 +95,41 @@ with st.sidebar:
         st.session_state.clear()
         st.info("Sie wurden abgemeldet.")
         st.stop()
+
+# ----------------------------
+# Optische Trennung
+# ----------------------------
+st.markdown("---")
+st.markdown("## Eingabe und Verlauf")
+
+# ----------------------------
+# Medikamenten-Eintrag
+# ----------------------------
+st.markdown("### Medikamenten-Eintrag")
+med_name = st.text_input("Name", key="med_name")
+med_date = st.date_input("Datum", value=dt.date.today(), key="med_date")
+med_drug = st.text_input("Medikament", key="med_drug")
+med_type = st.selectbox("Typ", ["Dauermedikation", "Bedarfsmedikation"], key="med_type")
+
+if st.button("Medikament speichern"):
+    new_med = pd.DataFrame([{
+        "Name": med_name,
+        "Datum": med_date.strftime("%Y-%m-%d"),
+        "Medikament": med_drug,
+        "Typ": med_type
+    }])
+    try:
+        existing_med = pd.read_csv(DATA_FILE_MED, sep=";", encoding="utf-8-sig")
+    except:
+        existing_med = pd.DataFrame(columns=MED_COLUMNS)
+    updated_med = pd.concat([existing_med, new_med], ignore_index=True)
+    updated_med.to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
+    st.success("Medikament gespeichert.")
+
 # ----------------------------
 # Schmerzverlauf-Eintrag
 # ----------------------------
-st.markdown("## Schmerzverlauf-Eintrag")
+st.markdown("### Schmerzverlauf-Eintrag")
 pain_name = st.text_input("Name", key="pain_name")
 pain_date = st.date_input("Datum", value=dt.date.today(), key="pain_date")
 pain_level = st.slider("Schmerzstärke (0–10)", min_value=0, max_value=10, key="pain_level")
@@ -146,37 +177,14 @@ if st.button("Schmerzverlauf speichern"):
     updated_pain.to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
     st.success("Schmerzverlauf gespeichert.")
 
-# Medikamenten-Eintrag
-# ----------------------------
-st.markdown("## Medikamenten-Eintrag")
-med_name = st.text_input("Name", key="med_name")
-med_date = st.date_input("Datum", value=dt.date.today(), key="med_date")
-med_drug = st.text_input("Medikament", key="med_drug")
-med_type = st.selectbox("Typ", ["Dauermedikation", "Bedarfsmedikation"], key="med_type")
-
-if st.button("Medikament speichern"):
-    new_med = pd.DataFrame([{
-        "Name": med_name,
-        "Datum": med_date.strftime("%Y-%m-%d"),
-        "Medikament": med_drug,
-        "Typ": med_type
-    }])
-    try:
-        existing_med = pd.read_csv(DATA_FILE_MED, sep=";", encoding="utf-8-sig")
-    except:
-        existing_med = pd.DataFrame(columns=MED_COLUMNS)
-    updated_med = pd.concat([existing_med, new_med], ignore_index=True)
-    updated_med.to_csv(DATA_FILE_MED, sep=";", index=False, encoding="utf-8-sig")
-    st.success("Medikament gespeichert.")
-
 # ----------------------------
 # Daten anzeigen und exportieren
 # ----------------------------
-st.markdown("## Daten anzeigen und exportieren")
+st.markdown("### Daten anzeigen und exportieren")
 filter_name = st.text_input("Filter nach Name (optional)", value="", key="filter_all")
 
 # Medikamente
-st.markdown("### Medikamentenliste")
+st.markdown("#### Medikamentenliste")
 df_med = load_data(DATA_FILE_MED, MED_COLUMNS)
 df_filtered_med = filter_by_name(df_med, filter_name)
 st.dataframe(df_filtered_med, use_container_width=True, height=300)
@@ -184,7 +192,7 @@ csv_med = to_csv_semicolon(df_filtered_med)
 st.download_button("CSV Medikamente herunterladen", data=csv_med, file_name=f"medications_{dt.date.today()}.csv", mime="text/csv")
 
 # Schmerzverlauf
-st.markdown("### Schmerzverlauf")
+st.markdown("#### Schmerzverlauf")
 df_pain = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
 df_filtered_pain = filter_by_name(df_pain, filter_name)
 st.dataframe(df_filtered_pain, use_container_width=True, height=300)
@@ -192,12 +200,14 @@ csv_pain = to_csv_semicolon(df_filtered_pain)
 st.download_button("CSV Schmerzverlauf herunterladen", data=csv_pain, file_name=f"pain_tracking_{dt.date.today()}.csv", mime="text/csv")
 
 # Diagramm
-st.markdown("### Diagramm")
+st.markdown("#### Diagramm")
 chart_fig = plot_pain(df_filtered_pain)
 if chart_fig:
     st.pyplot(chart_fig)
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
+
 
 
 
