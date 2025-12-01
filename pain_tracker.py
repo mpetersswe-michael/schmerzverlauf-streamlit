@@ -181,6 +181,19 @@ st.download_button(
 st.markdown("### Daten anzeigen und exportieren")
 filter_name = st.text_input("Filter nach Name (exakt)", value="", key="filter_all")
 
+# Schmerzverlauf
+df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
+df_filtered_pain = filter_by_name_exact(df_pain_all, filter_name)
+st.dataframe(df_filtered_pain, use_container_width=True, height=300)
+csv_pain = to_csv_semicolon(df_filtered_pain)
+st.download_button(
+    "CSV Schmerzverlauf herunterladen",
+    data=csv_pain,
+    file_name=f"pain_tracking_{dt.date.today()}.csv",
+    mime="text/csv"
+)
+
+
 # Medikamente
 st.markdown("#### Medikamente")
 df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
@@ -247,6 +260,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
