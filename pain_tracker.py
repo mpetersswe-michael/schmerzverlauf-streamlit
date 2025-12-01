@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime as dt
+from io import BytesIO
 
 # ----------------------------
 # Konfiguration
@@ -20,18 +21,27 @@ PAIN_COLUMNS = ["Name", "Datum", "Schmerzstärke", "Art", "Lokalisation", "Begle
 def load_data(file, columns):
     try:
         df = pd.read_csv(file, sep=";", encoding="utf-8-sig")
-        # Spalten erzwingen
+        # Spalten erzwingen und Reihenfolge sichern
         for c in columns:
             if c not in df.columns:
                 df[c] = ""
-        return df[columns]
+        df = df[columns]
+        # Darstellung robuster: leere Namen als leere Strings statt None
+        df["Name"] = df["Name"].fillna("").astype(str)
+        return df
     except:
         return pd.DataFrame(columns=columns)
 
 def filter_by_name(df, name):
-    if name:
-        return df[df["Name"].str.contains(name, case=False, na=False)]
-    return df
+    # Robuster Name-Filter: ignoriert leere Namen, Case-insensitive, trims
+    base = df.copy()
+    base["Name_clean"] = base["Name"].str.strip()
+    if name and name.strip():
+        mask = base["Name_clean"].str.contains(name.strip(), case=False, na=False)
+        base = base[mask]
+    # Keine „None“-Zeilen mehr zeigen (nur Darstellung, CSV bleibt unverändert)
+    base = base.drop(columns=["Name_clean"])
+    return base
 
 def to_csv_semicolon(df):
     return df.to_csv(index=False, sep=";", encoding="utf-8-sig").encode("utf-8-sig")
@@ -43,6 +53,8 @@ def plot_pain(df):
     dfx["Datum"] = pd.to_datetime(dfx["Datum"], errors="coerce")
     dfx["Schmerzstärke"] = pd.to_numeric(dfx["Schmerzstärke"], errors="coerce")
     dfx = dfx.dropna(subset=["Datum", "Schmerzstärke"]).sort_values("Datum")
+    if dfx.empty:
+        return None
     fig, ax = plt.subplots(figsize=(7, 3.5))
     ax.plot(dfx["Datum"], dfx["Schmerzstärke"], color="#b00020", linewidth=2.0, marker="o", markersize=4)
     ax.set_xlabel("Datum", fontsize=11)
@@ -55,24 +67,34 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
-# Startüberschrift mit großem Icon
+# Auth-Status
 # ----------------------------
-st.markdown("""
-<div style='display:flex; align-items:center; gap:12px; margin-bottom:20px;'>
-    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#b00020" viewBox="0 0 24 24">
-        <path d="M3 17l6-6 4 4 8-8v2l-8 8-4-4-6 6z"/>
-    </svg>
-    <span style='font-size:28px;'>Schmerzverlauf</span>
-</div>
-""", unsafe_allow_html=True)
+auth = st.session_state.get("auth", False)
+
+# ----------------------------
+# Startüberschrift mit großem linearem Diagramm-Icon NUR vor Login
+# ----------------------------
+if not auth:
+    st.markdown("""
+    <div style='display:flex; align-items:center; gap:12px; margin-bottom:20px;'>
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#b00020" viewBox="0 0 24 24" aria-label="Line chart icon">
+            <path d="M3 17l6-6 4 4 8-8v2l-8 8-4-4-6 6z"/>
+        </svg>
+        <span style='font-size:28px;'>Schmerzverlauf</span>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ----------------------------
 # Login
 # ----------------------------
-password = st.text_input("Login Passwort", type="password")
-if password != "QM1514":
-    st.warning("Bitte Passwort eingeben")
-    st.stop()
+password = st.text_input("Login Passwort", type="password", disabled=auth)
+if not auth:
+    if password == "QM1514":
+        st.session_state["auth"] = True
+        auth = True
+    else:
+        st.warning("Bitte Passwort eingeben")
+        st.stop()
 
 # ----------------------------
 # Sidebar mit Logout
@@ -106,9 +128,9 @@ if st.button("Medikament speichern"):
         st.warning("Bitte ein Medikament eingeben.")
     else:
         new_med = pd.DataFrame([{
-            "Name": med_name,
+            "Name": med_name.strip(),
             "Datum": med_date.strftime("%Y-%m-%d"),
-            "Medikament": med_drug,
+            "Medikament": med_drug.strip(),
             "Typ": med_type
         }])
         try:
@@ -143,13 +165,13 @@ if st.button("Schmerzverlauf speichern"):
         st.warning("Bitte einen Namen eingeben.")
     else:
         new_pain = pd.DataFrame([{
-            "Name": pain_name,
+            "Name": pain_name.strip(),
             "Datum": pain_date.strftime("%Y-%m-%d"),
             "Schmerzstärke": pain_level,
             "Art": ", ".join(pain_types),
             "Lokalisation": ", ".join(pain_locations),
             "Begleitsymptome": ", ".join(pain_symptoms),
-            "Bemerkung": pain_notes
+            "Bemerkung": pain_notes.strip()
         }])
         try:
             existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
@@ -163,31 +185,52 @@ if st.button("Schmerzverlauf speichern"):
 # Daten anzeigen und exportieren
 # ----------------------------
 st.markdown("### Daten anzeigen und exportieren")
-filter_name = st.text_input("Filter nach Name (optional)", value="", key="filter_all")
 
-st.markdown("#### Medikamentenliste")
-df_med = load_data(DATA_FILE_MED, MED_COLUMNS)
-df_filtered_med = filter_by_name(df_med, filter_name)
-st.dataframe(df_filtered_med, use_container_width=True, height=300)
-csv_med = to_csv_semicolon(df_filtered_med)
+# Optionaler exakter Namensfilter per Auswahl (verhindert Tippfehler)
+df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
+df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
+unique_names = sorted(set(
+    [n for n in df_med_all["Name"].tolist() + df_pain_all["Name"].tolist() if isinstance(n, str) and n.strip()]
+))
+name_pick = st.selectbox("Exakter Name (optional)", [""] + unique_names, index=0)
+text_filter = st.text_input("Filter nach Name (optional, Teilstring)", value="", key="filter_all")
+
+# Medikamente
+st.markdown("#### Medikamente")
+df_med = df_med_all
+if name_pick:
+    df_med = df_med[df_med["Name"].str.strip().str.casefold() == name_pick.strip().casefold()]
+df_med = filter_by_name(df_med, text_filter)
+st.dataframe(df_med, use_container_width=True, height=300)
+csv_med = to_csv_semicolon(df_med)
 st.download_button("CSV Medikamente herunterladen", data=csv_med, file_name=f"medications_{dt.date.today()}.csv", mime="text/csv")
 
+# Schmerzverlauf
 st.markdown("#### Schmerzverlauf")
-df_pain = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
-df_filtered_pain = filter_by_name(df_pain, filter_name)
-st.dataframe(df_filtered_pain, use_container_width=True, height=300)
-csv_pain = to_csv_semicolon(df_filtered_pain)
+df_pain = df_pain_all
+if name_pick:
+    df_pain = df_pain[df_pain["Name"].str.strip().str.casefold() == name_pick.strip().casefold()]
+df_pain = filter_by_name(df_pain, text_filter)
+st.dataframe(df_pain, use_container_width=True, height=300)
+csv_pain = to_csv_semicolon(df_pain)
 st.download_button("CSV Schmerzverlauf herunterladen", data=csv_pain, file_name=f"pain_tracking_{dt.date.today()}.csv", mime="text/csv")
 
 # ----------------------------
-# Diagramm ganz am Ende
+# Diagramm ganz am Ende + Download
 # ----------------------------
 st.markdown("#### Diagramm")
-chart_fig = plot_pain(df_filtered_pain)
+chart_fig = plot_pain(df_pain)
 if chart_fig:
     st.pyplot(chart_fig)
+    # Download als PNG
+    buf = BytesIO()
+    chart_fig.savefig(buf, format="png", dpi=160, bbox_inches="tight")
+    buf.seek(0)
+    st.download_button("Diagramm als PNG herunterladen", data=buf, file_name=f"schmerzverlauf_{dt.date.today()}.png", mime="image/png")
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
+
 
 
 
