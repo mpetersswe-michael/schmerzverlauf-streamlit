@@ -6,24 +6,18 @@ import matplotlib.dates as mdates
 import datetime as dt
 from io import BytesIO
 
-# ----------------------------
-# Button-Styles (funktionierend)
-# ----------------------------
 st.markdown("""
     <style>
-    /* Medikament speichern -> grün */
-    div.stButton > button:has(span:contains("Medikament speichern")) {
-        background-color: #4CAF50;
+    div.stButton > button:nth-child(1) {
+        background-color: #4CAF50; /* Grün */
         color: white;
     }
-    /* Schmerzverlauf speichern -> blau */
-    div.stButton > button:has(span:contains("Schmerzverlauf speichern")) {
-        background-color: #2196F3;
+    div.stButton > button:nth-child(2) {
+        background-color: #2196F3; /* Blau */
         color: white;
     }
-    /* Daten löschen -> rot */
-    div.stButton > button:has(span:contains("Daten löschen")) {
-        background-color: #f44336;
+    div.stButton > button:nth-child(3) {
+        background-color: #f44336; /* Rot */
         color: white;
     }
     </style>
@@ -318,6 +312,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
