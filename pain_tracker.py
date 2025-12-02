@@ -101,6 +101,7 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
+# ----------------------------
 # Login-Block
 # ----------------------------
 if "auth" not in st.session_state:
@@ -110,12 +111,14 @@ if not st.session_state["auth"]:
     st.markdown('<div class="login-box">🔒 📈 Login Schmerzverlauf</div>', unsafe_allow_html=True)
 
     password = st.text_input("Login Passwort", type="password", key="login_pw")
+
     if st.button("Login", key="login_btn"):
-    if password == "QM1514":   # ← dein Passwort
-        st.session_state["auth"] = True
-        st.success("Willkommen – du bist eingeloggt. Bitte bei den drei Punkten oben rechts 'Rerun' starten.")
-    else:
-        st.error("Falsches Passwort.")
+        if password == "QM1514":    # ← dein Passwort
+            st.session_state["auth"] = True
+            st.success("Willkommen – du bist eingeloggt. Bitte bei den drei Punkten oben rechts 'Rerun' starten.")
+        else:
+            st.error("Falsches Passwort.")
+    st.stop()
 
 with st.sidebar:
     st.markdown("### Navigation")
@@ -288,6 +291,7 @@ if isinstance(chart_fig, matplotlib.figure.Figure):
     )
 else:
     st.info("Keine gültigen Daten für das Diagramm vorhanden.")
+
 
 
 
