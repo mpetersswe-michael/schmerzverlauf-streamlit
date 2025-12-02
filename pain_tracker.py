@@ -33,7 +33,7 @@ st.markdown("# 📈 Schmerzverlauf")
 
 DATA_FILE_MED = "medications.csv"
 DATA_FILE_PAIN = "pain_tracking.csv"
-MED_COLUMNS = ["Name", "Datum", "Medikament", "Typ"]
+MED_COLUMNS = ["Name", "Datum", "Uhrzeit", "Medikament", "Darreichungsform", "Dosis", "Typ"]
 PAIN_COLUMNS = ["Name", "Datum", "Schmerzstärke", "Art", "Lokalisation", "Begleitsymptome", "Bemerkung"]
 
 # ----------------------------
@@ -121,6 +121,21 @@ st.markdown("## Medikamenten-Eintrag")
 
 med_name = st.text_input("Name", key="med_name", value=st.session_state.get("med_name", ""))
 med_date = st.date_input("Datum", value=st.session_state.get("med_date", dt.date.today()), key="med_date")
+med_time = st.time_input("Uhrzeit", key="med_time")   # NEU
+
+st.markdown("**Medikament verabreicht?**")
+med_given = st.radio("Auswahl", ["Ja", "Nein"], key="med_given", index=0 if st.session_state.get("med_given") == "Ja" else 1)
+
+if med_given == "Ja":
+    med_drug = st.text_input("Welches Medikament?", key="med_drug", value=st.session_state.get("med_drug", ""))
+    med_form = st.selectbox("Darreichungsform", ["Tablette", "Ampulle s.c.", "Tropfen", "Infusion"], key="med_form")  # NEU
+    med_dose = st.text_input("Dosis (z.B. 20mg, 50/4 mg)", key="med_dose")  # NEU
+else:
+    med_drug = "keines"
+    med_form = ""
+    med_dose = ""
+
+med_date = st.date_input("Datum", value=st.session_state.get("med_date", dt.date.today()), key="med_date")
 
 st.markdown("**Medikament verabreicht?**")
 med_given = st.radio("Auswahl", ["Ja", "Nein"], key="med_given", index=0 if st.session_state.get("med_given") == "Ja" else 1)
@@ -137,10 +152,15 @@ if st.button("💾 Medikament speichern"):
         st.warning("Bitte einen Namen eingeben.")
     else:
         new_med = pd.DataFrame([{
-            "Name": med_name.strip(),
-            "Datum": med_date.strftime("%Y-%m-%d"),
-            "Medikament": med_drug.strip(),
-            "Typ": med_type
+        "Name": med_name.strip(),
+        "Datum": med_date.strftime("%Y-%m-%d"),
+        "Uhrzeit": med_time.strftime("%H:%M"),
+        "Medikament": med_drug.strip(),
+        "Darreichungsform": med_form,
+        "Dosis": med_dose.strip(),
+        "Typ": med_type
+}])
+
         }])
         try:
             existing_med = pd.read_csv(DATA_FILE_MED, sep=";", encoding="utf-8-sig")
@@ -307,6 +327,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
