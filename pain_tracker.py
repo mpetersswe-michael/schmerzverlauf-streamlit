@@ -229,7 +229,7 @@ filter_name_med = st.selectbox(
     "Filter nach Name (Medikamente)",
     options=[""] + sorted(df_med_all["Name"].dropna().str.strip().unique()),
     index=0,
-    key="filter_med"
+    key="export_filter_med"
 )
 
 # Dropdown-Filter für Schmerzverlauf
@@ -237,7 +237,7 @@ filter_name_pain = st.selectbox(
     "Filter nach Name (Schmerzverlauf)",
     options=[""] + sorted(df_pain_all["Name"].dropna().str.strip().unique()),
     index=0,
-    key="filter_pain"
+    key="export_filter_pain"
 )
 
 # Medikamente anzeigen
@@ -284,6 +284,7 @@ if isinstance(chart_fig, matplotlib.figure.Figure):
     )
 else:
     st.info("Keine gültigen Daten für das Diagramm vorhanden.")
+
 
 
 
