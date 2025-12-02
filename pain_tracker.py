@@ -29,23 +29,23 @@ st.markdown("""
     <style>
     /* Button-Design */
     .stButton>button {
-        background-color: #4CAF50;   /* Grün */
-        color: white;                /* Textfarbe */
-        border-radius: 8px;          /* abgerundete Ecken */
-        padding: 0.6em 1.2em;        /* Innenabstand */
+        background-color: #4CAF50;
+        color: white;
+        border-radius: 8px;
+        padding: 0.6em 1.2em;
         font-weight: bold;
-        font-size: 1.1em;            /* etwas größer */
+        font-size: 1.1em;
         border: none;
         cursor: pointer;
     }
     .stButton>button:hover {
-        background-color: #45a049;   /* dunkleres Grün beim Hover */
+        background-color: #45a049;
         color: white;
     }
 
     /* Login-Box */
     .login-box {
-        background-color: #fff8cc;   /* hellgelber Hintergrund */
+        background-color: #fff8cc;
         padding: 1.4em;
         border-radius: 12px;
         text-align: center;
@@ -54,9 +54,9 @@ st.markdown("""
 
     /* Titelzeile mit Icon + Text */
     .login-title {
-        font-size: 1.8em;            /* größer */
+        font-size: 1.8em;
         font-weight: bold;
-        color: saddlebrown;          /* Braun für Text */
+        color: saddlebrown;
         margin-top: 0.4em;
     }
 
@@ -64,7 +64,7 @@ st.markdown("""
     .login-icon {
         display: block;
         margin: 0 auto 0.5em auto;
-        width: 70px;                 /* kompakter, harmonisch */
+        width: 70px;
         height: auto;
     }
     </style>
@@ -73,12 +73,23 @@ st.markdown("""
 # ----------------------------
 # Login-Box mit Schmerz-Icon
 # ----------------------------
-st.markdown("""
-    <div class="login-box">
-        <img src="images-schmerz_icon.png" class="login-icon">
-        <div class="login-title">🔒 🩺 Login Schmerzverlauf</div>
-    </div>
-""", unsafe_allow_html=True)
+if not st.session_state.get("auth", False):
+    st.markdown("""
+        <div class="login-box">
+            <img src="images-schmerz_icon.png" class="login-icon">
+            <div class="login-title">🔒 🩺 Login Schmerzverlauf</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    password = st.text_input("Login Passwort", type="password", key="login_pw")
+
+    if st.button("Login", key="login_btn"):
+        if password == "QM1514":
+            st.session_state["auth"] = True
+            st.success("Willkommen – du bist eingeloggt. Bitte bei den drei Punkten oben rechts 'Rerun' starten.")
+        else:
+            st.error("Falsches Passwort.")
+    st.stop()
 
 
 # ----------------------------
@@ -349,6 +360,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
