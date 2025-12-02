@@ -23,34 +23,57 @@ PAIN_COLUMNS = ["Name", "Datum", "Uhrzeit", "Schmerzstärke", "Art", "Lokalisati
 # ----------------------------
 # Styles für Buttons & Login
 # ----------------------------
-# Styles für Buttons & Login
-# ----------------------------
 st.markdown("""
     <style>
+    /* Button-Design */
     .stButton>button {
-        background-color: #4CAF50;
-        color: white;
-        border-radius: 8px;
-        padding: 0.5em 1em;
+        background-color: #4CAF50;   /* Grün */
+        color: white;                /* Textfarbe */
+        border-radius: 8px;          /* abgerundete Ecken */
+        padding: 0.6em 1.2em;        /* Innenabstand */
         font-weight: bold;
+        font-size: 1.1em;            /* etwas größer */
         border: none;
+        cursor: pointer;
     }
     .stButton>button:hover {
-        background-color: #45a049;
+        background-color: #45a049;   /* dunkleres Grün beim Hover */
         color: white;
     }
+
+    /* Login-Box */
     .login-box {
         background-color: #fff8cc;   /* hellgelber Hintergrund */
-        padding: 1.2em;
-        border-radius: 10px;
+        padding: 1.4em;
+        border-radius: 12px;
         text-align: center;
         margin-bottom: 2em;
-        font-size: 1.6em;            /* Titelzeile größer */
+    }
+
+    /* Titelzeile mit Icon + Text */
+    .login-title {
+        font-size: 1.8em;            /* größer */
         font-weight: bold;
-        color: saddlebrown;          /* Braun für Text + Icons */
+        color: saddlebrown;          /* Braun für Text */
+        margin-top: 0.4em;
+    }
+
+    .login-icon {
+        display: block;
+        margin: 0 auto 0.5em auto;
     }
     </style>
 """, unsafe_allow_html=True)
+
+# Beispiel für die Login-Box mit Icon
+st.markdown("""
+    <div class="login-box">
+        <img src="C:/Users/Nutzer/OneDrive/Bilder/Privat/images-schmerz_icon.png"
+             class="login-icon" width="90">
+        <div class="login-title">🔒 📈 Login Schmerzverlauf</div>
+    </div>
+""", unsafe_allow_html=True)
+
 
 
 
@@ -322,6 +345,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
