@@ -13,7 +13,9 @@ import matplotlib.figure
 st.set_page_config(page_title="Schmerzverlauf mit linearem Diagramm (etwas größer)", layout="wide") 
 DATA_FILE_MED = "medications.csv" 
 DATA_FILE_PAIN = "pain_tracking.csv" 
-MED_COLUMNS = ["Name", "Datum", "Uhrzeit", "Medikament", "Darreichungsform", "Dosis", "Typ"] PAIN_COLUMNS = ["Name", "Datum", "Uhrzeit", "Schmerzstärke", "Art", "Lokalisation", "Begleitsymptome", "Bemerkung"] 
+MED_COLUMNS = ["Name", "Datum", "Uhrzeit", "Medikament", "Darreichungsform", "Dosis", "Typ"]
+PAIN_COLUMNS = ["Name", "Datum", "Uhrzeit", "Schmerzstärke", "Art", "Lokalisation", "Begleitsymptome", "Bemerkung"]
+
 # ---------------------------- 
 # Styles für Buttons & Login # ---------------------------- 
 st.markdown(""" <style> .stButton>button { background-color: #4CAF50; color: white; 
@@ -289,6 +291,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
