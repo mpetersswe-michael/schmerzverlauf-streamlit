@@ -71,34 +71,29 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
-# Authentifizierung mit Logout und Passwort-Reset
+# Authentifizierung mit sicherem Login und Logout
 # ----------------------------
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
-if "password_input" not in st.session_state:
-    st.session_state["password_input"] = ""
 
-# Login-Bereich
+# Passwortfeld nur anzeigen, wenn nicht eingeloggt
 if not st.session_state["auth"]:
-    password = st.text_input("Login Passwort", type="password", key="password_input")
+    password = st.text_input("Login Passwort", type="password", key="login_pw")
     if st.button("Login"):
-        if password == "QM1514":   # <- dein Passwort hier
+        if password == "QM1514":  # ← dein Passwort hier
             st.session_state["auth"] = True
             st.success("Erfolgreich eingeloggt.")
         else:
             st.error("Falsches Passwort.")
     st.stop()
 
-# Wenn eingeloggt
+# Eingeloggt: Anzeige + Logout
 st.success("Du bist eingeloggt.")
 
-# Sidebar mit Logout
 with st.sidebar:
     st.markdown("### Navigation")
     if st.button("Logout"):
         st.session_state["auth"] = False
-        st.session_state["password_input"] = ""   # Passwortfeld zurücksetzen
-        st.info("Sie wurden abgemeldet.")
         st.experimental_rerun()
 
 # ----------------------------
@@ -326,6 +321,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
