@@ -71,11 +71,12 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
-# Authentifizierung
+# Authentifizierung – stabil & vertraut
 # ----------------------------
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
 
+# Login-Bereich
 if not st.session_state["auth"]:
     password = st.text_input("Login Passwort", type="password")
     if st.button("Login"):
@@ -97,6 +98,7 @@ with st.sidebar:
     if st.button("Logout"):
         st.session_state["auth"] = False
         st.experimental_rerun()
+
 
 # ----------------------------
 # Formular-Reset
@@ -323,6 +325,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
