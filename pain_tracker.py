@@ -23,7 +23,7 @@ MED_COLUMNS = ["Name", "Datum", "Uhrzeit", "Medikament", "Darreichungsform", "Do
 PAIN_COLUMNS = ["Name", "Datum", "Uhrzeit", "Schmerzstärke", "Art", "Lokalisation", "Begleitsymptome", "Bemerkung"]
 
 # ----------------------------
-# Login-Titelzeile mit Icon – geschützt durch Login-Status
+# Login-Bereich mit Titelzeile & Icon
 # ----------------------------
 if not st.session_state.get("auth", False):
     st.markdown("""
@@ -77,14 +77,15 @@ if not st.session_state.get("auth", False):
     if st.button("Login", key="login_btn"):
         if password == "QM1514":
             st.session_state["auth"] = True
-            st.success("✅ Willkommen – du bist eingeloggt. Bitte oben rechts 'Rerun' starten.")
+            st.success("✅ Willkommen – du bist eingeloggt.")
+            st.experimental_rerun()  # sofort neu laden mit Login-Status
         else:
             st.error("❌ Falsches Passwort.")
 
     st.stop()
 
 # ----------------------------
-# Titelzeile: Schmerzmännchen + Text
+# Nach erfolgreichem Login: Titelzeile anzeigen
 # ----------------------------
 st.markdown("""
     <div class="login-box">
@@ -362,6 +363,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
