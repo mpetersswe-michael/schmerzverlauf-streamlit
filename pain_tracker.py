@@ -43,26 +43,24 @@ st.markdown("""
         color: white;
     }
 
-    /* Login-Box */
+    /* Login-Zeile mit Icon */
     .login-box {
         background-color: #fff8cc;
         padding: 1.4em;
         border-radius: 12px;
-        text-align: center;
+        text-align: left;
         margin-bottom: 2em;
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         gap: 1em;
     }
 
-    /* Schmerz-Icon */
     .login-icon {
-        width: 90px;
+        width: 80px;
         height: auto;
     }
 
-    /* Titeltext */
     .login-title {
         font-size: 1.8em;
         font-weight: bold;
@@ -73,7 +71,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------------------
-# Login-Zeile: Schmerz-Icon + Titel nebeneinander
+# Login-Zeile: Icon + Titel nebeneinander
 # ----------------------------
 st.markdown("""
     <div class="login-box">
@@ -81,8 +79,6 @@ st.markdown("""
         <div class="login-title">🔒 Login Schmerzverlauf</div>
     </div>
 """, unsafe_allow_html=True)
-
-
 
 # ----------------------------
 # Hilfsfunktionen
@@ -352,6 +348,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
