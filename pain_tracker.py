@@ -56,7 +56,7 @@ st.markdown("""
     }
 
     .login-icon {
-        width: 80px;   /* Schmerzmännchen etwas größer */
+        width: 80px;   /* Schmerzmännchen größer */
         height: auto;
     }
 
@@ -70,7 +70,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------------------
-# Login-Zeile: Schmerzmännchen + Titel nebeneinander
+# Titelzeile: Schmerzmännchen + Text
 # ----------------------------
 st.markdown("""
     <div class="login-box">
@@ -348,6 +348,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
