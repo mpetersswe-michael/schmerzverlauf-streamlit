@@ -29,17 +29,17 @@ st.markdown("""
     <style>
     /* Button-Design */
     .stButton>button {
-        background-color: #4CAF50;
-        color: white;
-        border-radius: 8px;
-        padding: 0.6em 1.2em;
+        background-color: #4CAF50;   /* Grün */
+        color: white;                /* Textfarbe */
+        border-radius: 8px;          /* abgerundete Ecken */
+        padding: 0.6em 1.2em;        /* Innenabstand */
         font-weight: bold;
-        font-size: 1.1em;
+        font-size: 1.1em;            /* etwas größer */
         border: none;
         cursor: pointer;
     }
     .stButton>button:hover {
-        background-color: #45a049;
+        background-color: #45a049;   /* dunkleres Grün beim Hover */
         color: white;
     }
 
@@ -64,33 +64,21 @@ st.markdown("""
     .login-icon {
         display: block;
         margin: 0 auto 0.5em auto;
-        width: 70px;                 /* etwas kleiner als vorher */
+        width: 70px;                 /* kompakter, harmonisch */
         height: auto;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # ----------------------------
-# Schmerz-Icon laden und einbetten
+# Login-Box mit Schmerz-Icon
 # ----------------------------
-ICON_PATH = Path("images-schmerz_icon.png")  # Datei im Projektordner
-if ICON_PATH.exists():
-    icon_b64 = base64.b64encode(ICON_PATH.read_bytes()).decode("utf-8")
-    icon_html = f'<img src="data:image/png;base64,{icon_b64}" class="login-icon">'
-else:
-    icon_html = ""  # Fallback: kein Icon
-
-# ----------------------------
-# Login-Box mit eingebettetem Icon
-# ----------------------------
-st.markdown(f"""
+st.markdown("""
     <div class="login-box">
-        {icon_html}
-        <div class="login-title">🔒 📈 Login Schmerzverlauf</div>
+        <img src="images-schmerz_icon.png" class="login-icon">
+        <div class="login-title">🔒 🩺 Login Schmerzverlauf</div>
     </div>
 """, unsafe_allow_html=True)
-
-
 
 
 # ----------------------------
@@ -361,6 +349,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
