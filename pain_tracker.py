@@ -1,77 +1,19 @@
-# ----------------------------
-# Imports
-# ----------------------------
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import datetime as dt
-from io import BytesIO
-import matplotlib.figure
-
-# ----------------------------
-# Grundkonfiguration
-# ----------------------------
-st.set_page_config(page_title="Schmerzverlauf mit linearem Diagramm (etwas größer)", layout="wide")
-
-DATA_FILE_MED = "medications.csv"
-DATA_FILE_PAIN = "pain_tracking.csv"
-
-MED_COLUMNS = ["Name", "Datum", "Uhrzeit", "Medikament", "Darreichungsform", "Dosis", "Typ"]
-PAIN_COLUMNS = ["Name", "Datum", "Uhrzeit", "Schmerzstärke", "Art", "Lokalisation", "Begleitsymptome", "Bemerkung"]
-
-# ----------------------------
-# Styles für Buttons & Login
-# ----------------------------
-st.markdown("""
-    <style>
-    .stButton>button {
-        background-color: #4CAF50;
-        color: white;
-        border-radius: 8px;
-        padding: 0.5em 1em;
-        font-weight: bold;
-        border: none;
-    }
-    .stButton>button:hover {
-        background-color: #45a049;
-        color: white;
-    }
-    .login-box {
-        background-color: #fff8cc;   /* hellgelber Hintergrund */
-        padding: 1.2em;
-        border-radius: 10px;
-        text-align: center;
-        margin-bottom: 2em;
-        font-size: 1.4em;
-        font-weight: bold;
-        color: #333333;
-    }
-    .login-icon {
-        width: 80px;
-        height: auto;
-        margin-right: 0.5em;
-        vertical-align: middle;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# ----------------------------
-# Login-Titelzeile mit Icon
-# ----------------------------
-st.markdown("""
-    <div class="login-box">
-        <img src="images-schmerz_icon.png" class="login-icon">
-        🔒 Login Schmerzverlauf
-    </div>
-""", unsafe_allow_html=True)
-
-# ----------------------------
-# Passwortfeld & Button
-# ----------------------------
-password = st.text_input("Login Passwort", type="password")
-st.button("Login")
-
+# ---------------------------- 
+# Imports # ---------------------------- 
+import streamlit as st import pandas as pd import matplotlib.pyplot as plt import matplotlib.dates as mdates import datetime as dt from io import BytesIO import matplotlib.figure 
+# ---------------------------- 
+# Grundkonfiguration # ---------------------------- 
+st.set_page_config(page_title="Schmerzverlauf mit linearem Diagramm (etwas größer)", layout="wide") 
+DATA_FILE_MED = "medications.csv" 
+DATA_FILE_PAIN = "pain_tracking.csv" 
+MED_COLUMNS = ["Name", "Datum", "Uhrzeit", "Medikament", "Darreichungsform", "Dosis", "Typ"] PAIN_COLUMNS = ["Name", "Datum", "Uhrzeit", "Schmerzstärke", "Art", "Lokalisation", "Begleitsymptome", "Bemerkung"] 
+# ---------------------------- 
+# Styles für Buttons & Login # ---------------------------- 
+st.markdown(""" <style> .stButton>button { background-color: #4CAF50; color: white; 
+border-radius: 8px; padding: 0.5em 1em; font-weight: bold; border: none; } 
+.stButton>button:hover { background-color: #45a049; color: white; } 
+.login-box { background-color: #fff8cc;   /* hellgelber Hintergrund */ padding: 1.2em; border-radius: 10px; text-align: center; margin-bottom: 2em; font-size: 1.4em; font-weight: bold; color: #333333; } 
+</style> """, unsafe_allow_html=True) 
 # ----------------------------
 # Hilfsfunktionen
 # ----------------------------
@@ -340,6 +282,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
