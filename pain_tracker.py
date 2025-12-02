@@ -45,7 +45,7 @@ st.markdown("""
 
     /* Login-Box */
     .login-box {
-        background-color: #fff8cc;
+        background-color: #fff8cc;   /* hellgelber Hintergrund */
         padding: 1.4em;
         border-radius: 12px;
         text-align: center;
@@ -54,16 +54,17 @@ st.markdown("""
 
     /* Titelzeile mit Icon + Text */
     .login-title {
-        font-size: 1.8em;
+        font-size: 1.8em;            /* größer */
         font-weight: bold;
-        color: saddlebrown;
+        color: saddlebrown;          /* Braun für Text */
         margin-top: 0.4em;
     }
 
+    /* Schmerz-Icon */
     .login-icon {
         display: block;
         margin: 0 auto 0.5em auto;
-        width: 90px;
+        width: 70px;                 /* etwas kleiner als vorher */
         height: auto;
     }
     </style>
@@ -360,6 +361,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
