@@ -119,48 +119,39 @@ if st.button("✏️ Neuer Eintrag"):
 st.markdown("---")
 st.markdown("## Medikamenten-Eintrag")
 
-med_name = st.text_input("Name", key="med_name", value=st.session_state.get("med_name", ""))
-med_date = st.date_input("Datum", value=st.session_state.get("med_date", dt.date.today()), key="med_date")
-med_time = st.text_input("Uhrzeit (frei eingeben)", key="med_time", value=st.session_state.get("med_time", ""))
+MED_COLUMNS = ["Name", "Datum", "Uhrzeit", "Medikament", "Darreichungsform", "Dosis", "Typ"]
 
+med_name = st.text_input("Name", key="med_name_input")
+med_date = st.date_input("Datum", value=dt.date.today(), key="med_date_input")
+med_time = st.text_input("Uhrzeit (frei eingeben)", key="med_time_input")
 
 st.markdown("**Medikament verabreicht?**")
-med_given = st.radio("Auswahl", ["Ja", "Nein"], key="med_given", index=0 if st.session_state.get("med_given") == "Ja" else 1)
+med_given = st.radio("Auswahl", ["Ja", "Nein"], key="med_given_input")
 
 if med_given == "Ja":
-    med_drug = st.text_input("Welches Medikament?", key="med_drug", value=st.session_state.get("med_drug", ""))
-    med_form = st.selectbox("Darreichungsform", ["Tablette", "Ampulle s.c.", "Tropfen", "Infusion"], key="med_form")  # NEU
-    med_dose = st.text_input("Dosis (z.B. 20mg, 50/4 mg)", key="med_dose")  # NEU
+    med_drug = st.text_input("Welches Medikament?", key="med_drug_input")
+    med_form = st.selectbox("Darreichungsform", ["Tablette", "Ampulle s.c.", "Tropfen", "Infusion", "Salbe", "Inhalation"], key="med_form_input")
+    med_dose = st.text_input("Dosis (z. B. 20 mg, 50/4 mg)", key="med_dose_input")
 else:
     med_drug = "keines"
     med_form = ""
     med_dose = ""
 
-med_date = st.date_input("Datum", value=st.session_state.get("med_date", dt.date.today()), key="med_date")
-
-st.markdown("**Medikament verabreicht?**")
-med_given = st.radio("Auswahl", ["Ja", "Nein"], key="med_given", index=0 if st.session_state.get("med_given") == "Ja" else 1)
-
-if med_given == "Ja":
-    med_drug = st.text_input("Welches Medikament?", key="med_drug", value=st.session_state.get("med_drug", ""))
-else:
-    med_drug = "keines"
-
-med_type = st.selectbox("Typ", ["Dauermedikation", "Bedarfsmedikation"], key="med_type")
+med_type = st.selectbox("Typ", ["Dauermedikation", "Bedarfsmedikation"], key="med_type_input")
 
 if st.button("💾 Medikament speichern"):
     if not med_name.strip():
         st.warning("Bitte einen Namen eingeben.")
     else:
         new_med = pd.DataFrame([{
-        "Name": med_name.strip(),
-        "Datum": med_date.strftime("%Y-%m-%d"),
-        "Uhrzeit": med_time.strip(),
-        "Medikament": med_drug.strip(),
-        "Darreichungsform": med_form,
-        "Dosis": med_dose.strip(),
-        "Typ": med_type
-}])
+            "Name": med_name.strip(),
+            "Datum": med_date.strftime("%Y-%m-%d"),
+            "Uhrzeit": med_time.strip(),
+            "Medikament": med_drug.strip(),
+            "Darreichungsform": med_form,
+            "Dosis": med_dose.strip(),
+            "Typ": med_type
+        }])
         try:
             existing_med = pd.read_csv(DATA_FILE_MED, sep=";", encoding="utf-8-sig")
         except:
@@ -326,6 +317,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
