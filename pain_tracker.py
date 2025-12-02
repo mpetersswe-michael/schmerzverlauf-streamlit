@@ -297,15 +297,17 @@ else:
 # ----------------------------
 import shutil
 import os
+import datetime as dt
 
-LOCAL_FOLDER = "./"        # dort liegen deine CSV-Dateien
-SYNC_FOLDER = "./sync"     # zentrales Büro-Verzeichnis (z. B. OneDrive-Ordner)
+LOCAL_FILE = "pain_tracking.csv"
+SYNC_FOLDER = r"C:\Users\Nutzer\OneDrive\Dokumente\SchmerzverlaufStreamlit"
+SYNC_FILENAME = f"pain_tracking_{dt.date.today()}.csv"
+SYNC_PATH = os.path.join(SYNC_FOLDER, SYNC_FILENAME)
 
-# Styles für den blauen Button
 st.markdown("""
     <style>
     .stButton>button.sync-btn {
-        background-color: #2196F3;  /* Blau */
+        background-color: #2196F3;
         color: white;
         border-radius: 8px;
         padding: 0.5em 1em;
@@ -321,19 +323,17 @@ st.markdown("""
 
 st.markdown("## 🔄 Synchronisation")
 
-# Button mit eigener CSS-Klasse
-sync_clicked = st.button("Synchronisation starten", key="sync_btn", help="Überträgt lokale CSV-Dateien ins Büro-Verzeichnis")
-
-if sync_clicked:
+if st.button("Synchronisation starten", key="sync_btn"):
     try:
-        for file in ["medications.csv", "pain_tracking.csv"]:
-            src = os.path.join(LOCAL_FOLDER, file)
-            dst = os.path.join(SYNC_FOLDER, file)
-            if os.path.exists(src):
-                shutil.copy2(src, dst)
-        st.success("Synchronisation abgeschlossen – alle Daten wurden ins Büro-Verzeichnis übertragen.")
+        if os.path.exists(LOCAL_FILE):
+            shutil.copy2(LOCAL_FILE, SYNC_PATH)
+            st.success(f"Synchronisation abgeschlossen: Datei gespeichert unter\n`{SYNC_PATH}`")
+        else:
+            st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
+
 
 
 
