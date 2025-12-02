@@ -3,14 +3,14 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import matplotlib.figure
 import datetime as dt
 from io import BytesIO
+import matplotlib.figure
 
 # ----------------------------
 # Grundkonfiguration
 # ----------------------------
-st.set_page_config(page_title="Schmerzverlauf", layout="wide")
+st.set_page_config(page_title="Schmerzverlauf mit linearem Diagramm (etwas größer)", layout="wide")
 
 DATA_FILE_MED = "medications.csv"
 DATA_FILE_PAIN = "pain_tracking.csv"
@@ -83,11 +83,11 @@ def plot_pain(df):
         return None
     patient_name = dfx["Name"].dropna().unique()
     name_text = patient_name[0].strip() if len(patient_name) > 0 else "Unbekannt"
-    fig, ax = plt.subplots(figsize=(5.5, 2.8))
-    ax.plot(dfx["Datum"], dfx["Schmerzstärke"], color="#b00020", linewidth=2.0, marker="o", markersize=4)
+    fig, ax = plt.subplots(figsize=(7.5, 4.5))  # etwas größer
+    ax.plot(dfx["Datum"], dfx["Schmerzstärke"], color="#b00020", linewidth=2.0, marker="o", markersize=5)
     ax.set_xlabel("Datum", fontsize=11)
     ax.set_ylabel("Schmerzstärke", fontsize=11)
-    ax.set_title(f"Schmerzverlauf – {name_text}", fontsize=12)
+    ax.set_title(f"Schmerzverlauf – {name_text}", fontsize=13)
     ax.grid(True, linestyle="--", alpha=0.5)
     ax.tick_params(labelsize=9)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%d.%m.%Y"))
@@ -198,8 +198,7 @@ if st.button("💾 Schmerz-Eintrag speichern", key="pain_save_btn"):
             "Begleitsymptome": pain_symptoms.strip(),
             "Bemerkung": pain_note.strip()
         }])
-
-        try:
+         try:
             existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
         except:
             existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
@@ -216,21 +215,32 @@ if st.button("💾 Schmerz-Eintrag speichern", key="pain_save_btn"):
 
         st.success("Schmerz-Eintrag gespeichert.", icon="✅")
 
-
 # ----------------------------
 # Daten anzeigen und exportieren
 # ----------------------------
 st.markdown("## Daten anzeigen und exportieren")
 
-# Daten laden (ungefiltert)
+# Daten laden
 df_med_all = load_data(DATA_FILE_MED, MED_COLUMNS)
 df_pain_all = load_data(DATA_FILE_PAIN, PAIN_COLUMNS)
 
-# Getrennte Filterfelder (exakt)
-filter_name_med = st.text_input("Filter nach Name (Medikamente, exakt)", value="", key="export_filter_med")
-filter_name_pain = st.text_input("Filter nach Name (Schmerzverlauf, exakt)", value="", key="export_filter_pain")
+# Dropdown-Filter für Medikamente
+filter_name_med = st.selectbox(
+    "Filter nach Name (Medikamente)",
+    options=[""] + sorted(df_med_all["Name"].dropna().str.strip().unique()),
+    index=0,
+    key="filter_med"
+)
 
-# Medikamente
+# Dropdown-Filter für Schmerzverlauf
+filter_name_pain = st.selectbox(
+    "Filter nach Name (Schmerzverlauf)",
+    options=[""] + sorted(df_pain_all["Name"].dropna().str.strip().unique()),
+    index=0,
+    key="filter_pain"
+)
+
+# Medikamente anzeigen
 st.markdown("### Medikamente")
 df_filtered_med = filter_by_name_exact(df_med_all, filter_name_med)
 st.dataframe(df_filtered_med, use_container_width=True, height=300, key="med_table")
@@ -243,7 +253,7 @@ st.download_button(
     key="med_csv_dl"
 )
 
-# Schmerzverlauf
+# Schmerzverlauf anzeigen
 st.markdown("### Schmerzverlauf")
 df_filtered_pain = filter_by_name_exact(df_pain_all, filter_name_pain)
 st.dataframe(df_filtered_pain, use_container_width=True, height=300, key="pain_table")
@@ -256,12 +266,12 @@ st.download_button(
     key="pain_csv_dl"
 )
 
-# Diagramm (nutzt den Schmerzverlauf-Filter)
+# Diagramm
 st.markdown("### Diagramm")
 chart_fig = plot_pain(df_filtered_pain)
 
 if isinstance(chart_fig, matplotlib.figure.Figure):
-    st.pyplot(chart_fig)
+    st.pyplot(chart_fig)  # ohne key, stabiler
     buf = BytesIO()
     chart_fig.savefig(buf, format="png", dpi=160, bbox_inches="tight")
     buf.seek(0)
@@ -269,13 +279,11 @@ if isinstance(chart_fig, matplotlib.figure.Figure):
         "Diagramm als PNG herunterladen",
         data=buf,
         file_name=f"schmerzverlauf_{dt.date.today()}.png",
-        mime="image/png"
+        mime="image/png",
+        key="chart_png_dl"
     )
 else:
     st.info("Keine gültigen Daten für das Diagramm vorhanden.")
-
-plt.close(chart_fig)
-
 
 
 
