@@ -111,12 +111,11 @@ if not st.session_state["auth"]:
 
     password = st.text_input("Login Passwort", type="password", key="login_pw")
     if st.button("Login", key="login_btn"):
-        if password == "QM1514":   # ← dein Passwort
-            st.session_state["auth"] = True
-            st.success("Login erfolgreich.")
-        else:
-            st.error("Falsches Passwort.")
-    st.stop()
+    if password == "QM1514":   # ← dein Passwort
+        st.session_state["auth"] = True
+        st.success("Willkommen – du bist eingeloggt. Bitte bei den drei Punkten oben rechts 'Rerun' starten.")
+    else:
+        st.error("Falsches Passwort.")
 
 with st.sidebar:
     st.markdown("### Navigation")
@@ -289,6 +288,7 @@ if isinstance(chart_fig, matplotlib.figure.Figure):
     )
 else:
     st.info("Keine gültigen Daten für das Diagramm vorhanden.")
+
 
 
 
