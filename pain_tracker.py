@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.figure
 import datetime as dt
 from io import BytesIO
 
@@ -255,22 +256,25 @@ st.download_button(
     key="pain_csv_dl"
 )
 
-# Diagramm (nur bei gültiger Figure)
+# Diagramm (nutzt den Schmerzverlauf-Filter)
 st.markdown("### Diagramm")
 chart_fig = plot_pain(df_filtered_pain)
 
-if isinstance(chart_fig, plt.Figure):
+if isinstance(chart_fig, matplotlib.figure.Figure):
     st.pyplot(chart_fig, key="pain_chart")
     buf = BytesIO()
-    chart_fig.savefig(buf, format="png", dpi=160, bbox_inches="tight")
-    buf.seek(0)
-    st.download_button(
-        "Diagramm als PNG herunterladen",
-        data=buf,
-        file_name=f"schmerzverlauf_{dt.date.today()}.png",
-        mime="image/png",
-        key="chart_png_dl"
-    )
+    try:
+        chart_fig.savefig(buf, format="png", dpi=160, bbox_inches="tight")
+        buf.seek(0)
+        st.download_button(
+            "Diagramm als PNG herunterladen",
+            data=buf,
+            file_name=f"schmerzverlauf_{dt.date.today()}.png",
+            mime="image/png",
+            key="chart_png_dl"
+        )
+    except Exception as e:
+        st.error(f"Fehler beim Speichern des Diagramms: {e}")
 else:
     st.info("Keine gültigen Daten für das Diagramm vorhanden.")
 
