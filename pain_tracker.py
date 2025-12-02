@@ -292,6 +292,49 @@ if isinstance(chart_fig, matplotlib.figure.Figure):
 else:
     st.info("Keine gültigen Daten für das Diagramm vorhanden.")
 
+# ----------------------------
+# Synchronisation
+# ----------------------------
+import shutil
+import os
+
+LOCAL_FOLDER = "./"        # dort liegen deine CSV-Dateien
+SYNC_FOLDER = "./sync"     # zentrales Büro-Verzeichnis (z. B. OneDrive-Ordner)
+
+# Styles für den blauen Button
+st.markdown("""
+    <style>
+    .stButton>button.sync-btn {
+        background-color: #2196F3;  /* Blau */
+        color: white;
+        border-radius: 8px;
+        padding: 0.5em 1em;
+        font-weight: bold;
+        border: none;
+    }
+    .stButton>button.sync-btn:hover {
+        background-color: #1976D2;
+        color: white;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown("## 🔄 Synchronisation")
+
+# Button mit eigener CSS-Klasse
+sync_clicked = st.button("Synchronisation starten", key="sync_btn", help="Überträgt lokale CSV-Dateien ins Büro-Verzeichnis")
+
+if sync_clicked:
+    try:
+        for file in ["medications.csv", "pain_tracking.csv"]:
+            src = os.path.join(LOCAL_FOLDER, file)
+            dst = os.path.join(SYNC_FOLDER, file)
+            if os.path.exists(src):
+                shutil.copy2(src, dst)
+        st.success("Synchronisation abgeschlossen – alle Daten wurden ins Büro-Verzeichnis übertragen.")
+    except Exception as e:
+        st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
