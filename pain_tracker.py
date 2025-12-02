@@ -71,20 +71,26 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
-# Authentifizierung – stabil & vertraut
+# Authentifizierung – mit Rerun & Clear
 # ----------------------------
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
 
-password = st.text_input("Login Passwort", type="password", disabled=st.session_state["auth"])
-
+# Login-Bereich
 if not st.session_state["auth"]:
-    if password == "QM1514":  # ← dein Passwort hier
-        st.session_state["auth"] = True
-        st.success("Erfolgreich eingeloggt.")
-    else:
-        st.warning("Bitte Passwort eingeben.")
-        st.stop()
+    password = st.text_input("Login Passwort", type="password")
+    if st.button("Login"):
+        if password == "QM1514":  # ← dein Passwort hier
+            st.session_state["auth"] = True
+            st.experimental_rerun()   # App neu laden, Feld verschwindet
+        else:
+            st.error("Falsches Passwort.")
+    st.stop()
+
+# Eingeloggt: App-Inhalte starten
+st.success("Du bist eingeloggt.")
+st.markdown("## Schmerzverlauf-Eintrag")
+# ... hier beginnt deine App: Formulare, Tabellen, Diagramme ...
 
 # ----------------------------
 # Sidebar mit Logout
@@ -92,9 +98,8 @@ if not st.session_state["auth"]:
 with st.sidebar:
     st.markdown("### Navigation")
     if st.button("Logout"):
-        st.session_state.clear()
-        st.info("Sie wurden abgemeldet.")
-        st.stop()
+        st.session_state.clear()       # Session komplett zurücksetzen
+        st.experimental_rerun()        # App neu laden, Loginfeld erscheint wieder
 
 # ----------------------------
 # Formular-Reset
@@ -321,6 +326,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
