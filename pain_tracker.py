@@ -160,8 +160,6 @@ if st.button("💾 Medikament speichern"):
         "Dosis": med_dose.strip(),
         "Typ": med_type
 }])
-
-        }])
         try:
             existing_med = pd.read_csv(DATA_FILE_MED, sep=";", encoding="utf-8-sig")
         except:
@@ -327,6 +325,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
