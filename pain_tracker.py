@@ -71,18 +71,23 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
-# Authentifizierung – mit Rerun & Clear
+# Authentifizierung – stabil mit Rerun & Clear
 # ----------------------------
+import streamlit as st
+
+# Session initialisieren
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
 
 # Login-Bereich
 if not st.session_state["auth"]:
     password = st.text_input("Login Passwort", type="password")
-    if st.button("Login"):
+    login_clicked = st.button("Login")
+
+    if login_clicked:
         if password == "QM1514":  # ← dein Passwort hier
             st.session_state["auth"] = True
-            st.experimental_rerun()   # App neu laden, Feld verschwindet
+            st.experimental_rerun()  # ← sicherer Kontext: nach Button-Klick
         else:
             st.error("Falsches Passwort.")
     st.stop()
@@ -326,6 +331,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
