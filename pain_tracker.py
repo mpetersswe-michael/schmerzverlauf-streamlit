@@ -1,6 +1,12 @@
 # ---------------------------- 
 # Imports # ---------------------------- 
-import streamlit as st import pandas as pd import matplotlib.pyplot as plt import matplotlib.dates as mdates import datetime as dt from io import BytesIO import matplotlib.figure 
+import streamlit as
+st import pandas as pd 
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates 
+import datetime as dt from io import BytesIO 
+import matplotlib.figure 
+
 # ---------------------------- 
 # Grundkonfiguration # ---------------------------- 
 st.set_page_config(page_title="Schmerzverlauf mit linearem Diagramm (etwas größer)", layout="wide") 
@@ -282,6 +288,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
