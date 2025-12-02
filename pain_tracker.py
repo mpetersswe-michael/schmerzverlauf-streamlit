@@ -84,7 +84,6 @@ if not st.session_state["auth"]:
     if st.button("Login"):
         if password == "QM1514":   # <- dein Passwort hier
             st.session_state["auth"] = True
-            st.session_state["password_input"] = ""   # Passwort sofort löschen
             st.success("Erfolgreich eingeloggt.")
         else:
             st.error("Falsches Passwort.")
@@ -101,7 +100,6 @@ with st.sidebar:
         st.session_state["password_input"] = ""   # Passwortfeld zurücksetzen
         st.info("Sie wurden abgemeldet.")
         st.experimental_rerun()
-
 
 # ----------------------------
 # Formular-Reset
@@ -328,6 +326,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
