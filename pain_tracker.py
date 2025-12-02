@@ -71,13 +71,11 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
-# Authentifizierung – stabil mit Rerun & Clear
+# Authentifizierung
 # ----------------------------
-# Session initialisieren
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
 
-# Login-Bereich
 if not st.session_state["auth"]:
     password = st.text_input("Login Passwort", type="password")
     if st.button("Login"):
@@ -86,19 +84,24 @@ if not st.session_state["auth"]:
             st.success("Login erfolgreich.")
         else:
             st.error("Falsches Passwort.")
-    st.stop()
+    st.stop()  # ← bricht hier ab, wenn nicht eingeloggt
 
+# ----------------------------
 # Eingeloggt: App-Inhalte starten
+# ----------------------------
 st.success("Du bist eingeloggt.")
 st.markdown("## Schmerzverlauf-Eintrag")
 # ... hier beginnt deine App: Formulare, Tabellen, Diagramme ...
 
+# ----------------------------
 # Sidebar mit Logout
+# ----------------------------
 with st.sidebar:
     st.markdown("### Navigation")
     if st.button("Logout"):
         st.session_state["auth"] = False
         st.stop()
+
 # ----------------------------
 # Formular-Reset
 # ----------------------------
@@ -324,6 +327,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
