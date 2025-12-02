@@ -261,22 +261,20 @@ st.markdown("### Diagramm")
 chart_fig = plot_pain(df_filtered_pain)
 
 if isinstance(chart_fig, matplotlib.figure.Figure):
-    st.pyplot(chart_fig, key="pain_chart")
+    st.pyplot(chart_fig)
     buf = BytesIO()
-    try:
-        chart_fig.savefig(buf, format="png", dpi=160, bbox_inches="tight")
-        buf.seek(0)
-        st.download_button(
-            "Diagramm als PNG herunterladen",
-            data=buf,
-            file_name=f"schmerzverlauf_{dt.date.today()}.png",
-            mime="image/png",
-            key="chart_png_dl"
-        )
-    except Exception as e:
-        st.error(f"Fehler beim Speichern des Diagramms: {e}")
+    chart_fig.savefig(buf, format="png", dpi=160, bbox_inches="tight")
+    buf.seek(0)
+    st.download_button(
+        "Diagramm als PNG herunterladen",
+        data=buf,
+        file_name=f"schmerzverlauf_{dt.date.today()}.png",
+        mime="image/png"
+    )
 else:
     st.info("Keine gültigen Daten für das Diagramm vorhanden.")
+
+plt.close(chart_fig)
 
 
 
