@@ -9,12 +9,40 @@ import datetime as dt
 from io import BytesIO
 
 # ----------------------------
+# Button-Styles & Login-Box CSS
+# ----------------------------
+st.markdown("""
+    <style>
+    .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+        border-radius: 8px;
+        padding: 0.5em 1em;
+        font-weight: bold;
+        border: none;
+    }
+    .stButton>button:hover {
+        background-color: #45a049;
+        color: white;
+    }
+    .login-box {
+        background-color: #f0f2f6;
+        padding: 2em;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 2em;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# ----------------------------
 # Authentifizierung
 # ----------------------------
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
 
 if not st.session_state["auth"]:
+    st.markdown('<div class="login-box"><h2>🔐 Login Schmerzverlauf</h2></div>', unsafe_allow_html=True)
     password = st.text_input("Login Passwort", type="password")
     if st.button("Login"):
         if password == "QM1514":
@@ -34,7 +62,7 @@ with st.sidebar:
         st.stop()
 
 # ----------------------------
-# Datenpfade & Initialisierung
+# Datenpfade
 # ----------------------------
 pain_file = "pain_data.csv"
 med_file = "med_data.csv"
@@ -42,7 +70,7 @@ med_file = "med_data.csv"
 # ----------------------------
 # Formular: Schmerzverlauf
 # ----------------------------
-st.markdown("## Schmerzverlauf-Eintrag")
+st.markdown("## 📈 Schmerzverlauf-Eintrag")
 with st.form("pain_form"):
     pain_date = st.date_input("Datum", dt.date.today())
     pain_time = st.time_input("Uhrzeit", dt.datetime.now().time())
@@ -66,12 +94,12 @@ if submitted_pain:
     except FileNotFoundError:
         df_all = df_pain
     df_all.to_csv(pain_file, index=False)
-    st.success("Eintrag gespeichert.")
+    st.success("✅ Schmerz-Eintrag gespeichert.")
 
 # ----------------------------
 # Formular: Medikamenteneingabe
 # ----------------------------
-st.markdown("## Medikamenten-Eintrag")
+st.markdown("## 💊 Medikamenten-Eintrag")
 with st.form("med_form"):
     med_date = st.date_input("Medikament-Datum", dt.date.today())
     med_time = st.time_input("Medikament-Uhrzeit", dt.datetime.now().time())
@@ -95,12 +123,12 @@ if submitted_med:
     except FileNotFoundError:
         df_all_med = df_med
     df_all_med.to_csv(med_file, index=False)
-    st.success("Medikament gespeichert.")
+    st.success("✅ Medikament gespeichert.")
 
 # ----------------------------
 # Übersichtstabelle
 # ----------------------------
-st.markdown("## Übersicht Schmerzverlauf")
+st.markdown("## 📋 Übersicht Schmerzverlauf")
 try:
     df_overview = pd.read_csv(pain_file)
     st.dataframe(df_overview)
@@ -110,7 +138,7 @@ except FileNotFoundError:
 # ----------------------------
 # Diagramm: Schmerzverlauf
 # ----------------------------
-st.markdown("## Schmerzverlauf-Diagramm")
+st.markdown("## 📊 Schmerzverlauf-Diagramm")
 try:
     df_plot = pd.read_csv(pain_file)
     df_plot["Zeitstempel"] = pd.to_datetime(df_plot["Datum"] + " " + df_plot["Uhrzeit"])
@@ -126,6 +154,7 @@ try:
     st.pyplot(fig)
 except Exception as e:
     st.warning("Diagramm konnte nicht geladen werden.")
+
 
 
 
