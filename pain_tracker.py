@@ -1,4 +1,6 @@
-# pain_tracker.py
+# ----------------------------
+# Imports
+# ----------------------------
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -47,32 +49,6 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
-# ----------------------------
-# Login-Block
-# ----------------------------
-if "auth" not in st.session_state:
-    st.session_state["auth"] = False
-
-if not st.session_state["auth"]:
-    # Titelzeile mit Schloss- und Diagramm-Icon
-    st.markdown('<div class="login-box">🔒 📈 Login Schmerzverlauf</div>', unsafe_allow_html=True)
-
-    password = st.text_input("Login Passwort", type="password", key="login_pw")
-    if st.button("Login", key="login_btn"):
-        if password == "QM1514":   # <- dein Passwort
-            st.session_state["auth"] = True
-            st.success("Login erfolgreich.")
-        else:
-            st.error("Falsches Passwort.")
-    st.stop()
-
-with st.sidebar:
-    st.markdown("### Navigation")
-    if st.button("Logout", key="logout_btn"):
-        st.session_state["auth"] = False
-        st.stop()
-
 
 # ----------------------------
 # Hilfsfunktionen
@@ -125,16 +101,17 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
-# Authentifizierung
+# Login-Block
 # ----------------------------
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
 
 if not st.session_state["auth"]:
-    st.markdown('<div class="login-box"><h2>🔐 Login Schmerzverlauf</h2></div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-box">🔒 📈 Login Schmerzverlauf</div>', unsafe_allow_html=True)
+
     password = st.text_input("Login Passwort", type="password", key="login_pw")
     if st.button("Login", key="login_btn"):
-        if password == "QM1514":   # <- dein Passwort
+        if password == "QM1514":   # ← dein Passwort
             st.session_state["auth"] = True
             st.success("Login erfolgreich.")
         else:
@@ -227,11 +204,14 @@ if st.button("💾 Schmerz-Eintrag speichern", key="pain_save_btn"):
             "Begleitsymptome": pain_symptoms.strip(),
             "Bemerkung": pain_note.strip()
         }])
-        
-        # Spaltenrobustheit sicherstellen
+        try:
+            existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
+        except:
+            existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
         for c in PAIN_COLUMNS:
             if c not in existing_pain.columns:
                 existing_pain[c] = ""
+
         existing_pain = existing_pain[PAIN_COLUMNS]
 
         # Anhängen und speichern
@@ -254,7 +234,7 @@ filter_name_med = st.selectbox(
     "Filter nach Name (Medikamente)",
     options=[""] + sorted(df_med_all["Name"].dropna().str.strip().unique()),
     index=0,
-    key="export_filter_med"
+    key="filter_med"
 )
 
 # Dropdown-Filter für Schmerzverlauf
@@ -262,7 +242,7 @@ filter_name_pain = st.selectbox(
     "Filter nach Name (Schmerzverlauf)",
     options=[""] + sorted(df_pain_all["Name"].dropna().str.strip().unique()),
     index=0,
-    key="export_filter_pain"
+    key="filter_pain"
 )
 
 # Medikamente anzeigen
@@ -309,7 +289,6 @@ if isinstance(chart_fig, matplotlib.figure.Figure):
     )
 else:
     st.info("Keine gültigen Daten für das Diagramm vorhanden.")
-
 
 
 
