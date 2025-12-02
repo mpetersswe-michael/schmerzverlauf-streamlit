@@ -73,8 +73,6 @@ def plot_pain(df):
 # ----------------------------
 # Authentifizierung – stabil mit Rerun & Clear
 # ----------------------------
-import streamlit as st
-
 # Session initialisieren
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
@@ -82,12 +80,10 @@ if "auth" not in st.session_state:
 # Login-Bereich
 if not st.session_state["auth"]:
     password = st.text_input("Login Passwort", type="password")
-    login_clicked = st.button("Login")
-
-    if login_clicked:
-        if password == "QM1514":  # ← dein Passwort hier
+    if st.button("Login"):
+        if password == "QM1514":
             st.session_state["auth"] = True
-            st.experimental_rerun()  # ← sicherer Kontext: nach Button-Klick
+            st.success("Login erfolgreich.")
         else:
             st.error("Falsches Passwort.")
     st.stop()
@@ -97,15 +93,12 @@ st.success("Du bist eingeloggt.")
 st.markdown("## Schmerzverlauf-Eintrag")
 # ... hier beginnt deine App: Formulare, Tabellen, Diagramme ...
 
-# ----------------------------
 # Sidebar mit Logout
-# ----------------------------
 with st.sidebar:
     st.markdown("### Navigation")
     if st.button("Logout"):
-        st.session_state.clear()       # Session komplett zurücksetzen
-        st.experimental_rerun()        # App neu laden, Loginfeld erscheint wieder
-
+        st.session_state["auth"] = False
+        st.stop()
 # ----------------------------
 # Formular-Reset
 # ----------------------------
@@ -331,6 +324,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
