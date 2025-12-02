@@ -227,11 +227,7 @@ if st.button("💾 Schmerz-Eintrag speichern", key="pain_save_btn"):
             "Begleitsymptome": pain_symptoms.strip(),
             "Bemerkung": pain_note.strip()
         }])
-         try:
-            existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
-        except:
-            existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
-
+        
         # Spaltenrobustheit sicherstellen
         for c in PAIN_COLUMNS:
             if c not in existing_pain.columns:
@@ -313,6 +309,7 @@ if isinstance(chart_fig, matplotlib.figure.Figure):
     )
 else:
     st.info("Keine gültigen Daten für das Diagramm vorhanden.")
+
 
 
 
