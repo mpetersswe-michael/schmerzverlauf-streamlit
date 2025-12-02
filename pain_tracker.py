@@ -71,26 +71,37 @@ def plot_pain(df):
     return fig
 
 # ----------------------------
-# Authentifizierung
+# Authentifizierung mit Logout und Passwort-Reset
 # ----------------------------
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
+if "password_input" not in st.session_state:
+    st.session_state["password_input"] = ""
 
-password = st.text_input("Login Passwort", type="password", disabled=st.session_state["auth"])
+# Login-Bereich
 if not st.session_state["auth"]:
-    if password == "QM1514":
-        st.session_state["auth"] = True
-        st.success("Erfolgreich eingeloggt.")
-    else:
-        st.warning("Bitte Passwort eingeben.")
-        st.stop()
+    password = st.text_input("Login Passwort", type="password", key="password_input")
+    if st.button("Login"):
+        if password == "QM1514":   # <- dein Passwort hier
+            st.session_state["auth"] = True
+            st.session_state["password_input"] = ""   # Passwort sofort löschen
+            st.success("Erfolgreich eingeloggt.")
+        else:
+            st.error("Falsches Passwort.")
+    st.stop()
 
+# Wenn eingeloggt
+st.success("Du bist eingeloggt.")
+
+# Sidebar mit Logout
 with st.sidebar:
     st.markdown("### Navigation")
     if st.button("Logout"):
-        st.session_state.clear()
+        st.session_state["auth"] = False
+        st.session_state["password_input"] = ""   # Passwortfeld zurücksetzen
         st.info("Sie wurden abgemeldet.")
-        st.stop()
+        st.experimental_rerun()
+
 
 # ----------------------------
 # Formular-Reset
@@ -317,6 +328,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
