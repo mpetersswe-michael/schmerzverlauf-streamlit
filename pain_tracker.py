@@ -51,6 +51,43 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------------------
+# Titelzeile mit Icon
+# ----------------------------
+try:
+    col1, col2 = st.columns([1, 5])
+    with col1:
+        st.image("images-schmerz_icon.png", width=80)
+    with col2:
+        st.markdown("## 🔒 Login Schmerzverlauf")
+except Exception as e:
+    st.warning(f"Icon konnte nicht geladen werden: {e}")
+
+# ----------------------------
+# Login-Block mit Session-State
+# ----------------------------
+if "auth" not in st.session_state:
+    st.session_state["auth"] = False
+
+if not st.session_state["auth"]:
+    st.markdown('<div class="login-box">Bitte Passwort eingeben</div>', unsafe_allow_html=True)
+
+    password = st.text_input("Login Passwort", type="password", key="login_pw")
+
+    if st.button("Login", key="login_btn"):
+        if password == "QM1514":    # ← dein Passwort
+            st.session_state["auth"] = True
+            st.success("Willkommen – du bist eingeloggt. Bitte oben rechts 'Rerun' starten.")
+        else:
+            st.error("Falsches Passwort.")
+    st.stop()
+
+with st.sidebar:
+    st.markdown("### Navigation")
+    if st.button("Logout", key="logout_btn"):
+        st.session_state["auth"] = False
+        st.stop()
+
+# ----------------------------
 # Hilfsfunktionen
 # ----------------------------
 def load_data(file, columns):
@@ -290,6 +327,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
