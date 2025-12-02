@@ -50,46 +50,38 @@ st.markdown("""
         border-radius: 12px;
         text-align: center;
         margin-bottom: 2em;
-    }
-
-    /* Titelzeile mit Icon + Text */
-    .login-title {
-        font-size: 1.8em;
-        font-weight: bold;
-        color: saddlebrown;
-        margin-top: 0.4em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1em;
     }
 
     /* Schmerz-Icon */
     .login-icon {
-        display: block;
-        margin: 0 auto 0.5em auto;
-        width: 70px;
+        width: 90px;
         height: auto;
+    }
+
+    /* Titeltext */
+    .login-title {
+        font-size: 1.8em;
+        font-weight: bold;
+        color: saddlebrown;
+        margin: 0;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # ----------------------------
-# Login-Box mit Schmerz-Icon
+# Login-Zeile: Schmerz-Icon + Titel nebeneinander
 # ----------------------------
-if not st.session_state.get("auth", False):
-    st.markdown("""
-        <div class="login-box">
-            <img src="images-schmerz_icon.png" class="login-icon">
-            <div class="login-title">🔒 🩺 Login Schmerzverlauf</div>
-        </div>
-    """, unsafe_allow_html=True)
+st.markdown("""
+    <div class="login-box">
+        <img src="images-schmerz_icon.png" class="login-icon">
+        <div class="login-title">🔒 Login Schmerzverlauf</div>
+    </div>
+""", unsafe_allow_html=True)
 
-    password = st.text_input("Login Passwort", type="password", key="login_pw")
-
-    if st.button("Login", key="login_btn"):
-        if password == "QM1514":
-            st.session_state["auth"] = True
-            st.success("Willkommen – du bist eingeloggt. Bitte bei den drei Punkten oben rechts 'Rerun' starten.")
-        else:
-            st.error("Falsches Passwort.")
-    st.stop()
 
 
 # ----------------------------
@@ -360,6 +352,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
