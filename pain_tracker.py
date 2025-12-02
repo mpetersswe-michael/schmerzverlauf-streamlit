@@ -184,7 +184,37 @@ pain_symptoms = st.text_input("Begleitsymptome", key="pain_symptoms")
 pain_note = st.text_area("Bemerkung", key="pain_note")
 
 if st.button("💾 Schmerz-Eintrag speichern", key="pain_save_btn"):
-    if not pain_name.strip
+    if not pain_name.strip():
+        st.warning("Bitte einen Namen eingeben.")
+    else:
+        new_pain = pd.DataFrame([{
+            "Name": pain_name.strip(),
+            "Datum": pain_date.strftime("%Y-%m-%d"),
+            "Uhrzeit": pain_time.strip(),
+            "Schmerzstärke": pain_level,
+            "Art": pain_type.strip(),
+            "Lokalisation": pain_location.strip(),
+            "Begleitsymptome": pain_symptoms.strip(),
+            "Bemerkung": pain_note.strip()
+        }])
+
+        try:
+            existing_pain = pd.read_csv(DATA_FILE_PAIN, sep=";", encoding="utf-8-sig")
+        except:
+            existing_pain = pd.DataFrame(columns=PAIN_COLUMNS)
+
+        # Spaltenrobustheit sicherstellen
+        for c in PAIN_COLUMNS:
+            if c not in existing_pain.columns:
+                existing_pain[c] = ""
+        existing_pain = existing_pain[PAIN_COLUMNS]
+
+        # Anhängen und speichern
+        updated_pain = pd.concat([existing_pain, new_pain], ignore_index=True)
+        updated_pain.to_csv(DATA_FILE_PAIN, sep=";", index=False, encoding="utf-8-sig")
+
+        st.success("Schmerz-Eintrag gespeichert.", icon="✅")
+
 
 # ----------------------------
 # Daten anzeigen und exportieren
@@ -242,6 +272,7 @@ if chart_fig:
     )
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
+
 
 
 
