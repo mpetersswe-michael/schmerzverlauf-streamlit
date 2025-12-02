@@ -273,6 +273,25 @@ if chart_fig:
 else:
     st.info("Keine Daten für das Diagramm vorhanden.")
 
+# Diagramm (nutzt den Schmerzverlauf-Filter)
+st.markdown("### Diagramm")
+chart_fig = plot_pain(df_filtered_pain)
+
+if isinstance(chart_fig, plt.Figure):
+    st.pyplot(chart_fig, key="pain_chart")
+    buf = BytesIO()
+    chart_fig.savefig(buf, format="png", dpi=160, bbox_inches="tight")
+    buf.seek(0)
+    st.download_button(
+        "Diagramm als PNG herunterladen",
+        data=buf,
+        file_name=f"schmerzverlauf_{dt.date.today()}.png",
+        mime="image/png",
+        key="chart_png_dl"
+    )
+else:
+    st.info("Keine gültigen Daten für das Diagramm vorhanden.")
+
 
 
 
