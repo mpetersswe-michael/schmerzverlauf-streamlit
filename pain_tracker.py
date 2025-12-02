@@ -304,27 +304,13 @@ SYNC_FOLDER = r"C:\Users\Nutzer\OneDrive\Dokumente\SchmerzverlaufStreamlit"
 SYNC_FILENAME = f"pain_tracking_{dt.date.today()}.csv"
 SYNC_PATH = os.path.join(SYNC_FOLDER, SYNC_FILENAME)
 
-st.markdown("""
-    <style>
-    .stButton>button.sync-btn {
-        background-color: #2196F3;
-        color: white;
-        border-radius: 8px;
-        padding: 0.5em 1em;
-        font-weight: bold;
-        border: none;
-    }
-    .stButton>button.sync-btn:hover {
-        background-color: #1976D2;
-        color: white;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
 st.markdown("## 🔄 Synchronisation")
 
 if st.button("Synchronisation starten", key="sync_btn"):
     try:
+        if not os.path.exists(SYNC_FOLDER):
+            os.makedirs(SYNC_FOLDER)
+
         if os.path.exists(LOCAL_FILE):
             shutil.copy2(LOCAL_FILE, SYNC_PATH)
             st.success(f"Synchronisation abgeschlossen: Datei gespeichert unter\n`{SYNC_PATH}`")
@@ -332,11 +318,6 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
-
-
-
-
-
 
 
 
