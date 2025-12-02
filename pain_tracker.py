@@ -121,7 +121,8 @@ st.markdown("## Medikamenten-Eintrag")
 
 med_name = st.text_input("Name", key="med_name", value=st.session_state.get("med_name", ""))
 med_date = st.date_input("Datum", value=st.session_state.get("med_date", dt.date.today()), key="med_date")
-med_time = st.time_input("Uhrzeit", key="med_time")   # NEU
+med_time = st.text_input("Uhrzeit (frei eingeben)", key="med_time", value=st.session_state.get("med_time", ""))
+
 
 st.markdown("**Medikament verabreicht?**")
 med_given = st.radio("Auswahl", ["Ja", "Nein"], key="med_given", index=0 if st.session_state.get("med_given") == "Ja" else 1)
@@ -154,7 +155,7 @@ if st.button("💾 Medikament speichern"):
         new_med = pd.DataFrame([{
         "Name": med_name.strip(),
         "Datum": med_date.strftime("%Y-%m-%d"),
-        "Uhrzeit": med_time.strftime("%H:%M"),
+        "Uhrzeit": med_time.strip(),
         "Medikament": med_drug.strip(),
         "Darreichungsform": med_form,
         "Dosis": med_dose.strip(),
@@ -325,6 +326,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
