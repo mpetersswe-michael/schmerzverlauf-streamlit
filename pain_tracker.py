@@ -16,16 +16,13 @@ DATA_FILE_PAIN = "pain_tracking.csv"
 MED_COLUMNS = ["Name", "Datum", "Uhrzeit", "Medikament", "Darreichungsform", "Dosis", "Typ"]
 PAIN_COLUMNS = ["Name", "Datum", "Uhrzeit", "Schmerzstärke", "Art", "Lokalisation", "Begleitsymptome", "Bemerkung"]
 
-# ---------------------------- 
-# Styles für Buttons & Login # ---------------------------- 
-st.markdown(""" <style> .stButton>button { background-color: #4CAF50; color: white; 
-border-radius: 8px; padding: 0.5em 1em; font-weight: bold; border: none; } 
-.stButton>button:hover { background-color: #45a049; color: white; } 
-.login-box { background-color: #fff8cc;   /* hellgelber Hintergrund */ padding: 1.2em; border-radius: 10px; text-align: center; margin-bottom: 2em; font-size: 1.4em; font-weight: bold; color: #333333; } 
-</style> """, unsafe_allow_html=True) 
+# ----------------------------
+# Styles für Buttons & Login
+# ----------------------------
+st.markdown(""" ... """, unsafe_allow_html=True)
 
 # ----------------------------
-# Optionaler Bild-Block (Schmerzmännchen-Icon)
+# Login-Titelzeile mit Icon
 # ----------------------------
 try:
     col1, col2 = st.columns([1, 5])
@@ -35,6 +32,11 @@ try:
         st.markdown("## 🔒 Login Schmerzverlauf")
 except Exception as e:
     st.warning(f"Icon konnte nicht geladen werden: {e}")
+
+# Passwortfeld & Button
+password = st.text_input("Login Passwort", type="password")
+st.button("Login")
+
 # ----------------------------
 # Hilfsfunktionen
 # ----------------------------
@@ -303,6 +305,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
