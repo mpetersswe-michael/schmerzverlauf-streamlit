@@ -70,9 +70,6 @@ def plot_pain(df):
     fig.autofmt_xdate(rotation=20); fig.tight_layout()
     return fig
 
-# ----------------------------
-# Authentifizierung
-# ----------------------------
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
 
@@ -81,26 +78,20 @@ if not st.session_state["auth"]:
     if st.button("Login"):
         if password == "QM1514":
             st.session_state["auth"] = True
-            st.success("Login erfolgreich.")
+            st.experimental_rerun()
         else:
             st.error("Falsches Passwort.")
-    st.stop()  # ← bricht hier ab, wenn nicht eingeloggt
+    st.stop()
 
-# ----------------------------
-# Eingeloggt: App-Inhalte starten
-# ----------------------------
 st.success("Du bist eingeloggt.")
-st.markdown("## Schmerzverlauf-Eintrag")
-# ... hier beginnt deine App: Formulare, Tabellen, Diagramme ...
 
-# ----------------------------
-# Sidebar mit Logout
-# ----------------------------
 with st.sidebar:
     st.markdown("### Navigation")
     if st.button("Logout"):
+        st.session_state.clear()
         st.session_state["auth"] = False
-        st.stop()
+        st.experimental_rerun()
+
 
 # ----------------------------
 # Formular-Reset
@@ -327,6 +318,7 @@ if st.button("🗑️ Daten löschen"):
         st.success("Alle gespeicherten Daten wurden gelöscht.")
     else:
         st.error("Falsches Passwort – Daten wurden nicht gelöscht.")
+
 
 
 
