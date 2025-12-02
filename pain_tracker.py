@@ -36,14 +36,43 @@ st.markdown("""
         color: white;
     }
     .login-box {
-        background-color: #f0f2f6;
-        padding: 2em;
+        background-color: #fff8cc;   /* hellgelber Hintergrund */
+        padding: 1.2em;
         border-radius: 10px;
         text-align: center;
         margin-bottom: 2em;
+        font-size: 1.4em;
+        font-weight: bold;
+        color: #333333;
     }
     </style>
 """, unsafe_allow_html=True)
+
+# ----------------------------
+# Login-Block
+# ----------------------------
+if "auth" not in st.session_state:
+    st.session_state["auth"] = False
+
+if not st.session_state["auth"]:
+    # Titelzeile mit Schloss- und Diagramm-Icon
+    st.markdown('<div class="login-box">🔒 📈 Login Schmerzverlauf</div>', unsafe_allow_html=True)
+
+    password = st.text_input("Login Passwort", type="password", key="login_pw")
+    if st.button("Login", key="login_btn"):
+        if password == "QM1514":   # <- dein Passwort
+            st.session_state["auth"] = True
+            st.success("Login erfolgreich.")
+        else:
+            st.error("Falsches Passwort.")
+    st.stop()
+
+with st.sidebar:
+    st.markdown("### Navigation")
+    if st.button("Logout", key="logout_btn"):
+        st.session_state["auth"] = False
+        st.stop()
+
 
 # ----------------------------
 # Hilfsfunktionen
@@ -284,6 +313,7 @@ if isinstance(chart_fig, matplotlib.figure.Figure):
     )
 else:
     st.info("Keine gültigen Daten für das Diagramm vorhanden.")
+
 
 
 
