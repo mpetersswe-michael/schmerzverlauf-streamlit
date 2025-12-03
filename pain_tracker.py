@@ -12,7 +12,11 @@ import matplotlib.figure
 # ----------------------------
 # Grundkonfiguration
 # ----------------------------
-st.set_page_config(page_title="Schmerzverlauf mit linearem Diagramm (etwas größer)", layout="wide")
+st.set_page_config(
+    page_title="Schmerzverlauf mit linearem Diagramm (etwas größer)",
+    page_icon="images-schmerz_icon.png",   # ← dein Schmerzmännchen
+    layout="wide"
+)
 
 DATA_FILE_MED = "medications.csv"
 DATA_FILE_PAIN = "pain_tracking.csv"
@@ -327,6 +331,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
