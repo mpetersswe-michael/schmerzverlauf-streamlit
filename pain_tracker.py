@@ -57,12 +57,7 @@ st.markdown("""
 # Titelzeile mit Icon
 # ----------------------------
 try:
-    col1 = st.columns([1, 5])
-    
-    with col1:
-        st.markdown("## 🔒 Login Schmerzverlauf")
-except Exception as e:
-    st.warning(f"Icon konnte nicht geladen werden: {e}")
+    st.markdown("## 🔒 Login Schmerzverlauf")
 
 # ----------------------------
 # Login-Block mit Session-State
@@ -329,6 +324,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
