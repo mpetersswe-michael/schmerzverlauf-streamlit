@@ -14,19 +14,27 @@ import matplotlib.figure
 # ----------------------------
 st.set_page_config(
     page_title="Schmerzverlauf mit linearem Diagramm (etwas größer)",
-    layout ="wide"
+    layout="wide"
 )
 
 DATA_FILE_MED = "medications.csv"
 DATA_FILE_PAIN = "pain_tracking.csv"
 
-MED_COLUMNS = ["Name", "Datum", "Uhrzeit", "Medikament", "Darreichungsform", "Dosis", "Typ"]
-PAIN_COLUMNS = ["Name", "Datum", "Uhrzeit", "Schmerzstärke", "Art", "Lokalisation", "Begleitsymptome", "Bemerkung"]
+MED_COLUMNS = [
+    "Name", "Datum", "Uhrzeit", "Medikament",
+    "Darreichungsform", "Dosis", "Typ"
+]
+
+PAIN_COLUMNS = [
+    "Name", "Datum", "Uhrzeit", "Schmerzstärke",
+    "Art", "Lokalisation", "Begleitsymptome", "Bemerkung"
+]
 
 # ----------------------------
 # Styles für Buttons & Login
 # ----------------------------
-st.markdown("""
+st.markdown(
+    """
     <style>
     .stButton>button {
         background-color: #4CAF50;
@@ -51,13 +59,22 @@ st.markdown("""
         color: #333333;
     }
     </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)
 
 # ----------------------------
 # Titelzeile mit Icon
 # ----------------------------
 try:
-    st.markdown("## 🔒 Login Schmerzverlauf")
+    col1, col2 = st.columns([1, 5])
+    with col1:
+        st.image("images-schmerz_icon.png", width=80)
+    with col2:
+        st.markdown("## Login Schmerzverlauf")
+except Exception as e:
+    st.warning(f"Icon konnte nicht geladen werden: {e}")
+
 
 # ----------------------------
 # Login-Block mit Session-State
@@ -324,6 +341,7 @@ if st.button("Synchronisation starten", key="sync_btn"):
             st.error(f"Lokale Datei nicht gefunden: `{LOCAL_FILE}`")
     except Exception as e:
         st.error(f"Fehler bei der Synchronisation: {e}")
+
 
 
 
